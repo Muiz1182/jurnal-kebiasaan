@@ -1138,16 +1138,27 @@ class DashboardController extends Controller
                 ->limit(3)
                 ->get()
                 ->map(function ($item) {
-                    $name = $item->user->name ?? 'Siswa';
+                    $u = $item->user;
+                    $name = $u->name ?? 'Siswa';
                     $words = explode(' ', trim($name));
                     $initials = '';
                     foreach (array_slice($words, 0, 2) as $w) {
                         $initials .= strtoupper(substr($w, 0, 1));
                     }
+
+                    $fotoUrl = null;
+                    if ($u && $u->foto_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists($u->foto_profil)) {
+                        $fotoUrl = \Illuminate\Support\Facades\Storage::url($u->foto_profil);
+                    }
+
                     return (object) [
+                        'user_id'       => $item->user_id,
                         'name'          => $name,
                         'initials'      => !empty($initials) ? $initials : 'SW',
+                        'foto_url'      => $fotoUrl,
+                        'kelas'         => $u->kelas ?? null,
                         'total_actions' => $item->total_actions,
+                        'is_current'    => ($item->user_id == auth()->id()),
                     ];
                 });
         }

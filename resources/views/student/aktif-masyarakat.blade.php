@@ -286,19 +286,43 @@
                         <span class="text-amber-500 text-base">⭐</span>
                     </div>
 
-                    <div class="space-y-3">
-                        @forelse($inspirators as $ins)
-                            <div class="flex items-center justify-between p-2 rounded-xl hover:bg-gray-50 transition">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-900 font-extrabold text-xs flex items-center justify-center border border-blue-200">
-                                        {{ $ins->initials }}
+                    <div class="space-y-2.5">
+                        @forelse($inspirators as $index => $ins)
+                            <div class="flex items-center justify-between p-2.5 rounded-2xl transition {{ $ins->is_current ? 'bg-blue-50/70 border border-blue-200/60' : 'hover:bg-gray-50 border border-transparent' }}">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <!-- Avatar Foto Profil atau Inisial -->
+                                    <div class="relative shrink-0">
+                                        @if($ins->foto_url)
+                                            <img src="{{ $ins->foto_url }}" alt="{{ $ins->name }}" class="w-10 h-10 rounded-full object-cover border-2 {{ $ins->is_current ? 'border-blue-500 shadow-sm' : 'border-gray-200' }}">
+                                        @else
+                                            <div class="w-10 h-10 rounded-full {{ $ins->is_current ? 'bg-gradient-to-br from-blue-900 to-indigo-800 text-white' : 'bg-slate-100 text-slate-800' }} font-black text-xs flex items-center justify-center border {{ $ins->is_current ? 'border-blue-400' : 'border-gray-200' }}">
+                                                {{ $ins->initials }}
+                                            </div>
+                                        @endif
+                                        
+                                        <!-- Badge Medali Ranking 1, 2, 3 -->
+                                        <span class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black shadow-sm {{ $index === 0 ? 'bg-amber-400 text-amber-950' : ($index === 1 ? 'bg-slate-300 text-slate-900' : 'bg-amber-600 text-white') }}">
+                                            {{ $index + 1 }}
+                                        </span>
                                     </div>
-                                    <div>
-                                        <p class="text-xs font-bold text-gray-800 line-clamp-1">{{ $ins->name }}</p>
-                                        <p class="text-[10px] text-gray-400 font-medium">Kontributor Aktif</p>
+
+                                    <!-- Nama & Info Profil Murid -->
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <p class="text-xs font-black text-gray-900 truncate {{ $ins->is_current ? 'text-blue-950' : '' }}">
+                                                {{ $ins->name }}
+                                            </p>
+                                            @if($ins->is_current)
+                                                <span class="text-[9px] font-extrabold bg-blue-100 text-blue-900 px-1.5 py-0.2 rounded-md">Kamu</span>
+                                            @endif
+                                        </div>
+                                        <p class="text-[10px] text-gray-500 font-medium truncate mt-0.5">
+                                            {{ $ins->kelas ? 'Kelas ' . $ins->kelas : 'Siswa SMPN 9' }} • Kontributor Aktif
+                                        </p>
                                     </div>
                                 </div>
-                                <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black rounded-full border border-emerald-200">
+                                
+                                <span class="shrink-0 px-2.5 py-1 bg-emerald-50 text-emerald-800 font-black text-[10px] rounded-full border border-emerald-200 ml-2">
                                     {{ $ins->total_actions }} Aksi
                                 </span>
                             </div>
