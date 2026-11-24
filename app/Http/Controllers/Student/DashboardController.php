@@ -149,13 +149,19 @@ class DashboardController extends Controller
         // Waktu bangun awal: gunakan data tersimpan atau default 04:30
         $defaultTime = ($journal && !empty($journal->waktu_bangun)) ? $journal->waktu_bangun : '04:30';
 
+        $serverNow = Carbon::now('Asia/Jakarta');
+        $serverTime = $serverNow->format('H:i');
+        $serverTimestamp = $serverNow->timestamp;
+
         return view('student.bangun-pagi', compact(
             'user',
             'journal',
             'totalDaysActive',
             'tepatWaktuCount',
             'weeklyChartData',
-            'defaultTime'
+            'defaultTime',
+            'serverTime',
+            'serverTimestamp'
         ));
     }
 
@@ -1253,37 +1259,63 @@ class DashboardController extends Controller
 
     /**
      * Menyimpan/memperbarui status jurnal harian siswa (Bangun Pagi)
+     * Dilengkapi deteksi kecurangan manipulasi jam di pengaturan HP/laptop.
      */
     public function updateBangunPagi(Request $request, GoogleSheetsService $sheetsService)
     {
         $request->validate([
             'waktu_bangun' => 'nullable|string',
-            'status_waktu' => 'nullable|string|max:50',
+            'device_time'  => 'nullable|string',
+            'status_waktu' => 'nullable|string|max:100',
             'mood'         => 'required|string|max:50',
             'refleksi'     => 'nullable|string|max:1000',
         ]);
 
         $user = auth()->user();
         $today = Carbon::today()->toDateString();
-        $clickTime = now();
+        $serverNow = Carbon::now('Asia/Jakarta');
+        $serverTimeStr = $serverNow->format('H:i');
+        $serverMinutes = ($serverNow->hour * 60) + $serverNow->minute;
+        $cutoffMinutes = (5 * 60) + 30; // 05:30 WIB = 330 menit
 
-        $waktuBangun = $request->input('waktu_bangun') ?: now()->format('H:i');
+        // Cek indikasi manipulasi jam pada device pengguna
+        $deviceTime = $request->input('device_time') ?: $request->input('waktu_bangun');
+        $isManipulated = false;
 
-        // Evaluasi jam pengisian: jika lebih dari jam 05:30 (setengah 6 pagi) maka tercatat Kesiangan
-        $cleanTime = str_replace([':', ' ', '.'], '', $waktuBangun);
-        if (strlen($cleanTime) < 4) {
-            $cleanTime = str_pad($cleanTime, 4, '0', STR_PAD_LEFT);
+        if (!empty($deviceTime)) {
+            $cleanDev = str_replace(['WIB', 'wib', ' '], '', $deviceTime);
+            $timeParts = explode(':', $cleanDev);
+            if (count($timeParts) >= 2) {
+                $devH = (int) $timeParts[0];
+                $devM = (int) $timeParts[1];
+                $devTotalMinutes = ($devH * 60) + $devM;
+
+                // Jika selisih jam device dengan jam server nyata > 10 menit
+                if (abs($serverMinutes - $devTotalMinutes) > 10) {
+                    $isManipulated = true;
+                }
+            }
         }
 
-        if ($cleanTime > '0530') {
-            $statusWaktu = 'Kesiangan';
+        // Tentukan evaluasi waktu bangun murni berdasarkan jam server resmi (WIB)
+        if ($serverMinutes > $cutoffMinutes) {
+            // Melewati pukul 05:30 WIB
+            if ($isManipulated) {
+                $statusWaktu = 'Kesiangan (Manipulasi Jam HP Terdeteksi)';
+                $waktuBangunDisplay = $serverTimeStr . ' WIB (Jam HP: ' . ($deviceTime ?: '-') . ' WIB)';
+            } else {
+                $statusWaktu = 'Kesiangan';
+                $waktuBangunDisplay = $serverTimeStr . ' WIB';
+            }
         } else {
-            $statusWaktu = 'Tepat Waktu';
-        }
-
-        // Jika form mengirimkan status eksplisit Kesiangan, tetap hormati
-        if ($request->input('status_waktu') === 'Kesiangan') {
-            $statusWaktu = 'Kesiangan';
+            // Sebelum atau tepat pukul 05:30 WIB
+            if ($isManipulated) {
+                $statusWaktu = 'Tepat Waktu (Jam HP Tidak Cocok Server)';
+                $waktuBangunDisplay = $serverTimeStr . ' WIB (Jam HP: ' . ($deviceTime ?: '-') . ' WIB)';
+            } else {
+                $statusWaktu = 'Tepat Waktu';
+                $waktuBangunDisplay = $serverTimeStr . ' WIB';
+            }
         }
 
         $merapikanTempatTidur = $request->has('merapikan_tempat_tidur');
@@ -1301,8 +1333,10 @@ class DashboardController extends Controller
                     'date'    => $today,
                 ],
                 [
-                    'waktu_bangun'           => $waktuBangun,
+                    'waktu_bangun'           => $waktuBangunDisplay,
+                    'device_time'            => $deviceTime,
                     'status_waktu'           => $statusWaktu,
+                    'is_manipulated'         => $isManipulated,
                     'merapikan_tempat_tidur' => $merapikanTempatTidur,
                     'minum_air_putih'        => $minumAirPutih,
                     'mandi_pagi'             => $mandiPagi,
@@ -1332,7 +1366,7 @@ class DashboardController extends Controller
             $rowData = [
                 $user->name ?? 'Siswa',
                 $today,
-                $waktuBangun . ' WIB',
+                $waktuBangunDisplay,
                 $statusWaktu,
                 $merapikanTempatTidur ? 'Ya' : 'Tidak',
                 $minumAirPutih ? 'Ya' : 'Tidak',
@@ -1340,7 +1374,7 @@ class DashboardController extends Controller
                 $persiapanSekolah ? 'Ya' : 'Tidak',
                 $mood,
                 !empty($refleksi) ? $refleksi : '-',
-                $clickTime->toDateTimeString(),
+                $serverNow->toDateTimeString(),
             ];
 
             // updateOrAppendRow: kolom 0 = Nama Siswa, kolom 1 = Tanggal
@@ -1349,8 +1383,12 @@ class DashboardController extends Controller
             \Log::error("Gagal sync ke Google Sheets (Bangun Pagi): " . $e->getMessage());
         }
 
+        $feedbackMsg = $isManipulated
+            ? 'Jurnal bangun pagi berhasil disimpan! Peringatan: Jam di perangkat HP Anda terdeteksi tidak cocok dengan jam server resmi.'
+            : 'Jurnal bangun pagi berhasil disimpan dan langsung ter-rekap ke Google Spreadsheet!';
+
         return redirect()->route('student.bangun-pagi')
-            ->with('success', 'Jurnal bangun pagi berhasil disimpan dan langsung ter-rekap ke Google Spreadsheet!');
+            ->with('success', $feedbackMsg);
     }
 
     /**

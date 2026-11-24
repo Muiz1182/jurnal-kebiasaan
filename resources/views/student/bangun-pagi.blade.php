@@ -3,7 +3,10 @@
 @section('title', 'Bangun Pagi - Jurnal Harian 7 Kebiasaan Anak Indonesia')
 
 @section('content')
-<div class="flex min-h-screen bg-slate-50 w-full">
+<div class="flex min-h-screen bg-slate-50 w-full"
+     id="time-sync-container"
+     data-server-time="{{ $serverTime }}"
+     data-server-timestamp="{{ $serverTimestamp }}">
     <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-7xl mx-auto">
 
         <!-- Notifikasi Flash Message -->
@@ -30,6 +33,19 @@
             </div>
         @endif
 
+        <!-- BANNER PERINGATAN JIKA TERDETEKSI MANIPULASI JAM HP -->
+        <div id="tamper_warning_banner" class="hidden bg-amber-500/10 border-2 border-amber-500/30 p-4 sm:p-5 rounded-3xl text-amber-950 space-y-1.5 shadow-sm">
+            <div class="flex items-center gap-2.5">
+                <span class="text-2xl">⚠️</span>
+                <h4 class="text-sm font-black uppercase tracking-wider text-amber-900">
+                    Peringatan: Perbedaan Jam Perangkat Terdeteksi
+                </h4>
+            </div>
+            <p id="tamper_warning_text" class="text-xs text-amber-900 leading-relaxed font-medium">
+                Jam di pengaturan perangkat Anda tidak cocok dengan jam resmi server. Sistem otomatis mengunci waktu ke Jam Server Resmi (WIB) untuk mencegah manipulasi dan menjaga kejujuran data.
+            </p>
+        </div>
+
         <!-- HEADER BANNER NAVY MODERN (ANTISLOP) -->
         <div class="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden border border-slate-800">
             <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -39,13 +55,17 @@
                             KEBIASAAN 1
                         </span>
                         @if($journal)
-                            @if(str_contains(strtolower($journal->status_waktu), 'kesiangan'))
+                            @if($journal->is_manipulated)
+                                <span class="px-3 py-1 bg-rose-500 text-white text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
+                                    ⚠️ Terdeteksi Manipulasi Jam HP
+                                </span>
+                            @elseif(str_contains(strtolower($journal->status_waktu), 'kesiangan'))
                                 <span class="px-3 py-1 bg-amber-400 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
-                                    Tercatat: Kesiangan ({{ $journal->waktu_bangun }} WIB)
+                                    Tercatat: Kesiangan
                                 </span>
                             @else
                                 <span class="px-3 py-1 bg-emerald-500 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
-                                    Tercatat: Tepat Waktu ({{ $journal->waktu_bangun }} WIB)
+                                    Tercatat: Tepat Waktu
                                 </span>
                             @endif
                         @else
@@ -58,7 +78,7 @@
                         Bangun Pagi
                     </h1>
                     <p class="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed">
-                        Waktu pengisian mengikuti jam otomatis pada HP atau laptop kamu. Jika mengisi lewat dari pukul 05:30 WIB, sistem otomatis mencatat kesiangan namun kamu tetap dapat mengirim jurnal.
+                        Sistem dilengkapi validasi anti-manipulasi waktu server. Batas waktu bangun tepat adalah pukul 05:30 WIB. Jika mengisi lewat batas, tetap dapat disimpan dengan pencatatan otomatis.
                     </p>
                 </div>
 
@@ -91,8 +111,9 @@
         <form id="form-bangun-pagi" action="{{ route('student.bangun-pagi.update') }}" method="POST">
             @csrf
 
-            <!-- Hidden input waktu bangun dan status waktu otomatis dari jam device -->
+            <!-- Hidden input waktu dan status -->
             <input type="hidden" name="waktu_bangun" id="waktu_bangun_input" value="{{ old('waktu_bangun', optional($journal)->waktu_bangun ?? '') }}">
+            <input type="hidden" name="device_time" id="device_time_input" value="{{ old('device_time', optional($journal)->device_time ?? '') }}">
             <input type="hidden" name="status_waktu" id="status_waktu_input" value="{{ old('status_waktu', optional($journal)->status_waktu ?? '') }}">
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -100,39 +121,44 @@
                 <!-- KOLOM KIRI & TENGAH (FORMULIR INPUT) -->
                 <div class="lg:col-span-2 space-y-6">
 
-                    <!-- 1. WAKTU TERDETEKSI DARI DEVICE & EVALUASI OTOMATIS -->
+                    <!-- 1. WAKTU VALID TERVALIDASI SERVER -->
                     <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
                         <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div>
                                 <h3 class="text-base sm:text-lg font-black text-slate-900">
-                                    1. Waktu Terdeteksi Otomatis
+                                    1. Waktu Resmi & Verifikasi Anti-Kecurangan
                                 </h3>
                                 <p class="text-xs text-slate-500">
-                                    Mengikuti jam perangkat (HP / Laptop). Pengisian lewat dari pukul 05:30 WIB tercatat kesiangan.
+                                    Jam divalidasi langsung oleh server resmi untuk mencegah pengubahan jam manual pada HP/laptop.
                                 </p>
                             </div>
-                            <span class="text-[11px] font-bold px-3 py-1 bg-slate-100 text-slate-700 rounded-full w-fit">
-                                Jam Otomatis Device
+                            <span id="sync_status_badge" class="text-[11px] font-bold px-3 py-1 bg-emerald-100 text-emerald-900 rounded-full w-fit">
+                                Terverifikasi Server
                             </span>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
-                            <!-- Display Jam Device -->
+                            <!-- Display Jam Server Resmi -->
                             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between space-y-3">
                                 <div>
-                                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">
-                                        Waktu Pengisian Saat Ini
-                                    </p>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                            Waktu Resmi Pengisian
+                                        </p>
+                                        <span id="device_clock_sub" class="text-[10px] font-bold text-slate-400">
+                                            HP: --:--
+                                        </span>
+                                    </div>
                                     <div class="flex items-baseline gap-2 mt-1">
                                         <span id="live_clock_display" class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                                            --:--
+                                            {{ $serverTime }}
                                         </span>
                                         <span class="text-xs font-extrabold text-slate-500 uppercase">WIB</span>
                                     </div>
                                 </div>
-                                <div class="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
-                                    <span>📱</span>
-                                    <span>Tersinkronisasi otomatis tanpa perlu memilih jam manual.</span>
+                                <div class="text-[11px] text-slate-600 flex items-center gap-1.5 font-medium">
+                                    <span id="lock_icon">🔒</span>
+                                    <span id="lock_text">Terkunci ke waktu server WIB resmi. Mengubah jam HP tidak akan memanipulasi penilaian.</span>
                                 </div>
                             </div>
 
@@ -146,7 +172,7 @@
                                         </p>
                                     </div>
                                     <p id="status_desc" class="text-xs text-slate-600 leading-relaxed font-medium">
-                                        Memeriksa jam perangkat Anda.
+                                        Menyesuaikan dengan jam resmi server.
                                     </p>
                                 </div>
                                 <div class="pt-2 border-t border-slate-200/60 text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
@@ -348,22 +374,22 @@
                     <!-- MANFAAT BANGUN PAGI -->
                     <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                         <h4 class="text-sm font-black text-slate-900 border-b border-slate-100 pb-3 uppercase tracking-wider">
-                            Aturan Waktu Bangun Pagi
+                            Keamanan & Validasi Waktu
                         </h4>
 
                         <div class="space-y-3">
                             <div class="flex items-start gap-3 bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100">
-                                <span class="text-lg">⏰</span>
+                                <span class="text-lg">🛡️</span>
                                 <div>
-                                    <p class="text-xs font-extrabold text-emerald-950">Tepat Waktu (s/d 05:30 WIB)</p>
-                                    <p class="text-[11px] text-emerald-800 leading-snug mt-0.5">Mengisi sebelum atau tepat pukul 05:30 WIB tercatat sebagai bangun pagi tepat waktu.</p>
+                                    <p class="text-xs font-extrabold text-emerald-950">Validasi Server Sentral</p>
+                                    <p class="text-[11px] text-emerald-800 leading-snug mt-0.5">Penilaian waktu dikunci langsung oleh jam server resmi (WIB) sehingga tidak dapat dimanipulasi melalui pengaturan jam HP.</p>
                                 </div>
                             </div>
                             <div class="flex items-start gap-3 bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100">
-                                <span class="text-lg">⏳</span>
+                                <span class="text-lg">⏰</span>
                                 <div>
-                                    <p class="text-xs font-extrabold text-amber-950">Kesiangan (> 05:30 WIB)</p>
-                                    <p class="text-[11px] text-amber-800 leading-snug mt-0.5">Mengisi lebih dari pukul 05:30 WIB terhitung kesiangan, namun jurnal tetap dapat disimpan.</p>
+                                    <p class="text-xs font-extrabold text-amber-950">Batas Waktu Tepat (05:30 WIB)</p>
+                                    <p class="text-[11px] text-amber-800 leading-snug mt-0.5">Mengisi lewat dari pukul 05:30 WIB otomatis terhitung kesiangan namun jurnal tetap dapat dikirim normal.</p>
                                 </div>
                             </div>
                         </div>
@@ -386,55 +412,108 @@
 </div>
 
 <script>
-    // 1. Inisialisasi Jam Device Pengguna & Status Waktu Otomatis
-    function initDeviceTime() {
+    // 1. Inisialisasi Deteksi Jam Device vs Jam Server Resmi
+    function initAntiCheatClock() {
+        const container = document.getElementById('time-sync-container');
+        const serverTimeStr = container.dataset.serverTime || '04:30';
+        const serverTimestampSec = parseInt(container.dataset.serverTimestamp) || Math.floor(Date.now() / 1000);
+
         const waktuInput = document.getElementById('waktu_bangun_input');
+        const deviceTimeInput = document.getElementById('device_time_input');
         const statusInput = document.getElementById('status_waktu_input');
+
         const clockDisplay = document.getElementById('live_clock_display');
+        const deviceSub = document.getElementById('device_clock_sub');
+        const syncBadge = document.getElementById('sync_status_badge');
+        const lockIcon = document.getElementById('lock_icon');
+        const lockText = document.getElementById('lock_text');
+
         const card = document.getElementById('status_card');
         const icon = document.getElementById('status_icon');
         const title = document.getElementById('status_title');
         const desc = document.getElementById('status_desc');
 
-        // Jika sudah ada jurnal yang tersimpan sebelumnya di database hari ini, tampilkan jam itu
-        // Jika belum ada atau pengguna membuka form baru, ambil jam device sekarang
-        let timeStr = waktuInput.value;
+        const tamperBanner = document.getElementById('tamper_warning_banner');
+        const tamperText = document.getElementById('tamper_warning_text');
 
-        if (!timeStr) {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            timeStr = `${hours}:${minutes}`;
-            waktuInput.value = timeStr;
-        }
+        // Ambil waktu dari device HP/laptop pengguna
+        const nowDevice = new Date();
+        const devH = String(nowDevice.getHours()).padStart(2, '0');
+        const devM = String(nowDevice.getMinutes()).padStart(2, '0');
+        const deviceClock = `${devH}:${devM}`;
+        deviceTimeInput.value = deviceClock;
+        deviceSub.textContent = `HP: ${deviceClock}`;
 
-        // Tampilkan di UI
-        clockDisplay.textContent = timeStr;
+        // Hitung selisih waktu antara Jam Device dan Jam Server Resmi
+        const deviceEpochMs = nowDevice.getTime();
+        const serverEpochMs = serverTimestampSec * 1000;
+        const diffMinutes = Math.abs(deviceEpochMs - serverEpochMs) / (1000 * 60);
 
-        // Evaluasi apakah lebih dari jam 05:30 (setengah 6 pagi)
-        // Bandingkan jam:menit
-        const [h, m] = timeStr.split(':').map(Number);
-        const totalMinutes = (h * 60) + m;
-        const cutoffMinutes = (5 * 60) + 30; // 05:30 = 330 menit
+        // Ambang batas toleransi: 10 menit (untuk antisipasi perbedaan milidetik koneksi internet)
+        const isTampered = diffMinutes > 10;
 
-        if (totalMinutes > cutoffMinutes) {
-            // Lebih dari jam 05:30 -> Kesiangan
-            statusInput.value = 'Kesiangan';
-            card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-amber-50 border-amber-200';
-            icon.textContent = '⏰';
-            title.textContent = 'Kesiangan (> 05:30 WIB)';
-            title.className = 'text-xs font-black uppercase tracking-wider text-amber-950';
-            desc.textContent = `Waktu pengisian terdeteksi pukul ${timeStr} WIB (melewati batas 05:30 WIB). Terhitung kesiangan, tetapi jurnal tetap dapat disimpan secara normal.`;
-            desc.className = 'text-xs text-amber-900 leading-relaxed font-medium';
+        // Jam yang digunakan untuk penilaian adalah Jam Server Resmi (WIB)
+        const activeClock = serverTimeStr;
+        waktuInput.value = activeClock;
+        clockDisplay.textContent = activeClock;
+
+        // Evaluasi apakah jam server melewati batas 05:30 WIB
+        const [servH, servM] = activeClock.split(':').map(Number);
+        const serverTotalMinutes = (servH * 60) + servM;
+        const cutoffMinutes = (5 * 60) + 30; // 05:30 WIB = 330 menit
+        const isLate = serverTotalMinutes > cutoffMinutes;
+
+        if (isTampered) {
+            // TERDETEKSI MANIPULASI JAM HP!
+            tamperBanner.classList.remove('hidden');
+            tamperText.textContent = `Jam di pengaturan HP Anda (${deviceClock} WIB) berselisih ${Math.round(diffMinutes)} menit dari Jam Server Resmi (${serverTimeStr} WIB). Sistem otomatis mengunci waktu ke Jam Server Resmi (${serverTimeStr} WIB) agar penilaian tetap sah dan adil.`;
+
+            syncBadge.className = 'text-[11px] font-bold px-3 py-1 bg-rose-100 text-rose-950 border border-rose-300 rounded-full w-fit';
+            syncBadge.textContent = '⚠️ Jam HP Tidak Cocok Server';
+
+            lockIcon.textContent = '⚠️';
+            lockText.textContent = `Jam HP (${deviceClock}) dimanipulasi / tidak cocok. Sistem mengunci ke Jam Server Resmi (${serverTimeStr} WIB).`;
+
+            if (isLate) {
+                statusInput.value = 'Kesiangan';
+                card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-rose-50 border-rose-200';
+                icon.textContent = '⏰';
+                title.textContent = 'Kesiangan (Manipulasi Jam Terdeteksi)';
+                title.className = 'text-xs font-black uppercase tracking-wider text-rose-950';
+                desc.textContent = `Waktu server resmi menunjukkan pukul ${serverTimeStr} WIB (melewati 05:30 WIB). Terhitung kesiangan. Jurnal tetap dapat disimpan.`;
+                desc.className = 'text-xs text-rose-900 leading-relaxed font-medium';
+            } else {
+                statusInput.value = 'Tepat Waktu';
+                card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-amber-50 border-amber-200';
+                icon.textContent = '🛡️';
+                title.textContent = 'Tepat Waktu (Waktu Server Resmi)';
+                title.className = 'text-xs font-black uppercase tracking-wider text-amber-950';
+                desc.textContent = `Jam server resmi menunjukkan pukul ${serverTimeStr} WIB (sebelum 05:30 WIB). Terhitung tepat waktu. Catatan: Jam HP Anda (${deviceClock}) tidak cocok dengan server.`;
+                desc.className = 'text-xs text-amber-900 leading-relaxed font-medium';
+            }
         } else {
-            // Sebelum atau tepat 05:30 -> Tepat Waktu
-            statusInput.value = 'Tepat Waktu';
-            card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-emerald-50 border-emerald-200';
-            icon.textContent = '🏆';
-            title.textContent = 'Tepat Waktu (<= 05:30 WIB)';
-            title.className = 'text-xs font-black uppercase tracking-wider text-emerald-950';
-            desc.textContent = `Luar biasa! Waktu pengisian terdeteksi pukul ${timeStr} WIB (sebelum 05:30 WIB). Terus pertahankan kedisiplinan bangun pagi!`;
-            desc.className = 'text-xs text-emerald-900 leading-relaxed font-medium';
+            // JAM DEVICE COCOK DENGAN SERVER
+            tamperBanner.classList.add('hidden');
+            syncBadge.className = 'text-[11px] font-bold px-3 py-1 bg-emerald-100 text-emerald-900 rounded-full w-fit';
+            syncBadge.textContent = 'Terverifikasi Server';
+
+            if (isLate) {
+                statusInput.value = 'Kesiangan';
+                card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-amber-50 border-amber-200';
+                icon.textContent = '⏰';
+                title.textContent = 'Kesiangan (> 05:30 WIB)';
+                title.className = 'text-xs font-black uppercase tracking-wider text-amber-950';
+                desc.textContent = `Waktu pengisian resmi pukul ${serverTimeStr} WIB (melewati batas 05:30 WIB). Terhitung kesiangan, tetapi jurnal tetap dapat disimpan normal.`;
+                desc.className = 'text-xs text-amber-900 leading-relaxed font-medium';
+            } else {
+                statusInput.value = 'Tepat Waktu';
+                card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-emerald-50 border-emerald-200';
+                icon.textContent = '🏆';
+                title.textContent = 'Tepat Waktu (<= 05:30 WIB)';
+                title.className = 'text-xs font-black uppercase tracking-wider text-emerald-950';
+                desc.textContent = `Luar biasa! Pengisian pukul ${serverTimeStr} WIB (sebelum 05:30 WIB). Terus pertahankan kedisiplinan bangun pagi!`;
+                desc.className = 'text-xs text-emerald-900 leading-relaxed font-medium';
+            }
         }
     }
 
@@ -470,7 +549,7 @@
 
     // 5. Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
-        initDeviceTime();
+        initAntiCheatClock();
         document.querySelectorAll('.routine-card input[type="checkbox"]').forEach(cb => {
             updateRoutineUI(cb);
         });

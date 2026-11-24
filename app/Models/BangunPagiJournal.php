@@ -15,7 +15,9 @@ class BangunPagiJournal extends Model
         'user_id',
         'date',
         'waktu_bangun',
+        'device_time',
         'status_waktu',
+        'is_manipulated',
         'merapikan_tempat_tidur',
         'minum_air_putih',
         'mandi_pagi',
@@ -25,6 +27,7 @@ class BangunPagiJournal extends Model
     ];
 
     protected $casts = [
+        'is_manipulated'         => 'boolean',
         'merapikan_tempat_tidur' => 'boolean',
         'minum_air_putih'        => 'boolean',
         'mandi_pagi'              => 'boolean',
