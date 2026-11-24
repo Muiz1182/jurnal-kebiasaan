@@ -177,7 +177,8 @@
                                 <label for="password" class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
                                     Kata Sandi
                                 </label>
-                                <a href="#" class="text-xs font-bold text-blue-900 hover:text-blue-700 transition hover:underline">
+                                <a href="{{ route('password.request') }}" 
+                                   class="text-xs font-extrabold text-blue-900 hover:text-blue-700 hover:underline transition">
                                     Lupa Sandi?
                                 </a>
                             </div>
@@ -199,17 +200,12 @@
                             </div>
                         </div>
 
-                        <!-- Opsi Ingat Saya & Lupa Sandi -->
-                        <div class="flex items-center justify-between pt-1">
-                            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-600 select-none">
+                        <!-- Opsi Ingat Saya -->
+                        <div class="flex items-center pt-1">
+                            <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-600 select-none">
                                 <input type="checkbox" name="remember" class="w-4 h-4 rounded-md border-slate-300 text-blue-900 focus:ring-blue-900 cursor-pointer">
-                                <span>Ingat saya</span>
+                                <span>Ingat sesi saya di perangkat ini</span>
                             </label>
-
-                            <a href="{{ route('password.request') }}" 
-                               class="text-xs font-extrabold text-blue-900 hover:text-blue-700 hover:underline transition">
-                                Lupa Sandi?
-                            </a>
                         </div>
 
                         <!-- Tombol Masuk Utama -->
