@@ -1,292 +1,442 @@
 @extends('layouts.student')
 
-@section('title', 'Jurnal Olahraga')
+@section('title', 'Rajin Berolahraga - Jurnal Harian 7 Kebiasaan Anak Indonesia')
 
 @section('content')
-<div class="flex min-h-screen bg-gray-50 w-full">
-    
-    <main class="flex-1 p-8 space-y-6 overflow-y-auto">
-        
-        <!-- Notifikasi Pesan Sukses -->
+<div class="flex min-h-screen bg-slate-50 w-full">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-7xl mx-auto">
+
+        <!-- Notifikasi Flash Message -->
         @if(session('success'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-2xl shadow-sm text-sm font-medium flex items-center gap-3" role="alert">
-                <span class="text-xl">✨</span>
-                <span>{{ session('success') }}</span>
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-5 py-4 rounded-2xl shadow-sm text-sm font-semibold flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">✅</span>
+                    <span>{{ session('success') }}</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-950 font-bold text-lg leading-none">&times;</button>
             </div>
         @endif
 
-        <form action="{{ route('student.olahraga.store') }}" method="POST">
-            @csrf
+        @if($errors->any())
+            <div class="bg-rose-50 border border-rose-200 text-rose-900 px-5 py-4 rounded-2xl shadow-sm text-sm font-semibold space-y-1">
+                <div class="flex items-center gap-2 text-rose-700 font-bold">
+                    <span>⚠️</span> Mohon lengkapi isian formulir:
+                </div>
+                <ul class="list-disc list-inside text-xs text-rose-800 space-y-0.5">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-            <!-- HEADER BANNER BIRU TUA (Sesuai Referensi Gambar) -->
-            <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 p-6 sm:p-8 rounded-3xl shadow-xl text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-6 relative overflow-hidden">
-                <!-- Efek aksen cahaya latar belakang tipis -->
-                <div class="absolute -right-10 -top-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                <div class="space-y-2 z-10">
-                    <span class="inline-block px-3.5 py-1 bg-white/10 backdrop-blur-md text-blue-200 text-[10px] font-extrabold rounded-full uppercase tracking-widest border border-white/10">
-                        KEBIASAAN 3
-                    </span>
-                    <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white">Jurnal Olahraga</h1>
-                    <p class="text-blue-200/90 text-xs sm:text-sm italic font-medium">
-                        "Tubuh yang sehat adalah rumah bagi pikiran yang hebat."
+        <!-- HEADER BANNER NAVY MODERN (ANTISLOP) -->
+        <div class="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden border border-slate-800">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold rounded-full uppercase tracking-wider border border-emerald-400/30">
+                            KEBIASAAN 3
+                        </span>
+                        @if($hasReachedTarget)
+                            <span class="px-3 py-1 bg-emerald-500 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
+                                Target 30 Menit Tercapai
+                            </span>
+                        @elseif($journal)
+                            <span class="px-3 py-1 bg-amber-400 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
+                                Durasi Terisi ({{ $journal->durasi }} Menit)
+                            </span>
+                        @else
+                            <span class="px-3 py-1 bg-slate-800 text-slate-300 text-[11px] font-extrabold rounded-full uppercase tracking-wider border border-slate-700">
+                                Belum Mengisi Hari Ini
+                            </span>
+                        @endif
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+                        Rajin Berolahraga
+                    </h1>
+                    <p class="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed">
+                        Aktivitas fisik teratur menjaga kebugaran tubuh, meningkatkan fokus belajar, dan memicu energi positif setiap hari.
                     </p>
                 </div>
 
-                <!-- Bagian Tanggal Hari Ini & Tombol Simpan -->
-                <div class="flex items-center gap-4 z-10 w-full md:w-auto justify-between md:justify-end">
-                    <div class="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-3 rounded-2xl flex items-center gap-3">
+                <!-- Indikator Tanggal & Tombol Aksi -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="bg-slate-800/90 border border-slate-700 px-4 py-3 rounded-2xl flex items-center gap-3">
                         <span class="text-xl">📅</span>
                         <div>
-                            <p class="text-[9px] font-black uppercase tracking-widest text-blue-300">HARI INI</p>
-                            <p class="text-xs sm:text-sm font-extrabold text-white">{{ \Carbon\Carbon::now()->translatedFormat('l, d M Y') }}</p>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">TANGGAL HARI INI</p>
+                            <p class="text-xs sm:text-sm font-extrabold text-white">
+                                {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
+                            </p>
                         </div>
                     </div>
 
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition text-xs sm:text-sm">
+                    @if($journal)
+                        <button type="button" onclick="confirmReset()" class="bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 font-bold px-4 py-3 rounded-2xl transition text-xs flex items-center gap-2">
+                            <span>🗑️</span> Kosongkan
+                        </button>
+                    @endif
+
+                    <button type="button" onclick="document.getElementById('form-olahraga').submit()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition text-xs sm:text-sm cursor-pointer">
                         <span>💾</span> Simpan Jurnal
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- FORM UTAMA -->
+        <form id="form-olahraga" action="{{ route('student.olahraga.store') }}" method="POST">
+            @csrf
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                <!-- KOLOM KIRI & TENGAH -->
+
+                <!-- KOLOM KIRI DAN TENGAH (FORMULIR INPUT) -->
                 <div class="lg:col-span-2 space-y-6">
-                    
-                    <!-- 1. Pilih Jenis Olahraga (Multi-select) -->
-                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
-                        <div class="flex justify-between items-center">
-                            <h3 class="font-extrabold text-gray-900 text-base">Pilih Jenis Olahraga <span class="text-xs font-normal text-gray-400">(Bisa pilih lebih dari satu)</span></h3>
+
+                    <!-- 1. PILIH JENIS OLAHRAGA (MULTI-SELECT) -->
+                    <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                            <div>
+                                <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                    1. Jenis Olahraga yang Dilakukan
+                                </h3>
+                                <p class="text-xs text-slate-500">Pilih satu atau lebih olahraga yang kamu lakukan hari ini</p>
+                            </div>
+                            <span id="selected_sports_count" class="text-xs font-bold px-3 py-1 bg-slate-100 text-slate-700 rounded-full w-fit">
+                                0 Dipilih
+                            </span>
                         </div>
-                        
+
                         @php
-                            // Ambil data lama jika ada validasi gagal atau dari database
-                            $oldSports = old('jenis_olahraga', isset($journal->jenis_olahraga) ? explode(', ', $journal->jenis_olahraga) : []);
-                            
-                            $defaultSports = [
-                                'Lari / Jalan', 'Bersepeda', 'Berenang', 'Sepak Bola', 
-                                'Basket', 'Latihan Beban', 'Senam'
+                            $savedSportsRaw = old('jenis_olahraga');
+                            if (!$savedSportsRaw && isset($journal->jenis_olahraga)) {
+                                $savedSportsRaw = explode(', ', $journal->jenis_olahraga);
+                            }
+                            $oldSports = is_array($savedSportsRaw) ? array_map('trim', $savedSportsRaw) : [];
+
+                            $presetSports = [
+                                ['name' => 'Lari / Jogging', 'icon' => '🏃‍♂️'],
+                                ['name' => 'Jalan Kaki Cepat', 'icon' => '🚶‍♂️'],
+                                ['name' => 'Bersepeda', 'icon' => '🚴‍♂️'],
+                                ['name' => 'Berenang', 'icon' => '🏊‍♂️'],
+                                ['name' => 'Sepak Bola / Futsal', 'icon' => '⚽'],
+                                ['name' => 'Bola Basket', 'icon' => '🏀'],
+                                ['name' => 'Bulu Tangkis', 'icon' => '🏸'],
+                                ['name' => 'Bola Voli', 'icon' => '🏐'],
+                                ['name' => 'Senam / Yoga', 'icon' => '🤸'],
+                                ['name' => 'Latihan Beban / Push-up', 'icon' => '🏋️‍♂️'],
+                                ['name' => 'Lompat Tali / Skipping', 'icon' => '🪢'],
+                                ['name' => 'Lainnya', 'icon' => '➕'],
                             ];
 
-                            // Mendeteksi apakah ada olahraga custom (di luar daftar default)
-                            $customSports = array_filter($oldSports, function($sport) use ($defaultSports) {
-                                return !in_array($sport, $defaultSports);
+                            $presetNames = array_column($presetSports, 'name');
+                            $customSports = array_filter($oldSports, function($s) use ($presetNames) {
+                                return !in_array($s, $presetNames);
                             });
-
                             $hasCustomSelected = count($customSports) > 0;
                         @endphp
 
-                        <!-- Container untuk menampung input hidden dinamis agar bisa dikirim sebagai array -->
+                        <!-- Container input hidden array jenis_olahraga[] -->
                         <div id="hidden_sports_container">
-                            @foreach($oldSports as $selectedSport)
-                                <input type="hidden" name="jenis_olahraga[]" value="{{ trim($selectedSport) }}" class="hidden-sport-input" data-sport="{{ trim($selectedSport) }}">
+                            @foreach($oldSports as $sportItem)
+                                <input type="hidden" name="jenis_olahraga[]" value="{{ $sportItem }}" class="hidden-sport-input" data-sport="{{ $sportItem }}">
                             @endforeach
                         </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            @php
-                                $sports = [
-                                    ['name' => 'Lari / Jalan', 'icon' => '🏃‍♂️'],
-                                    ['name' => 'Bersepeda', 'icon' => '🚴‍♂️'],
-                                    ['name' => 'Berenang', 'icon' => '🏊‍♂️'],
-                                    ['name' => 'Sepak Bola', 'icon' => '⚽'],
-                                    ['name' => 'Basket', 'icon' => '🏀'],
-                                    ['name' => 'Latihan Beban', 'icon' => '🏋️‍♂️'],
-                                    ['name' => 'Senam', 'icon' => '🤸'],
-                                    ['name' => 'Lainnya', 'icon' => '➕'],
-                                ];
-                            @endphp
-
-                            @foreach($sports as $sport)
+                        <!-- Grid Pilihan Olahraga -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            @foreach($presetSports as $sport)
                                 @php
-                                    $isSelected = ($sport['name'] === 'Lainnya') ? $hasCustomSelected : in_array($sport['name'], $oldSports);
+                                    $isSelected = ($sport['name'] === 'Lainnya')
+                                        ? $hasCustomSelected
+                                        : in_array($sport['name'], $oldSports);
                                 @endphp
-                                <button type="button" 
+                                <button type="button"
                                     onclick="toggleSport('{{ $sport['name'] }}', this)"
-                                    class="sport-btn p-4 rounded-2xl border text-center flex flex-col items-center gap-2 transition {{ $isSelected ? 'border-emerald-600 bg-emerald-50/40 text-emerald-900 shadow-sm' : 'border-gray-200 hover:border-emerald-300 text-gray-700 bg-white' }}"
-                                    data-sport-name="{{ $sport['name'] }}">
+                                    data-sport-name="{{ $sport['name'] }}"
+                                    class="sport-btn p-3.5 sm:p-4 rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition cursor-pointer {{ $isSelected ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold shadow-sm ring-1 ring-emerald-500' : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white font-medium hover:bg-slate-50' }}">
                                     <span class="text-2xl">{{ $sport['icon'] }}</span>
-                                    <span class="text-xs font-bold">{{ $sport['name'] }}</span>
+                                    <span class="text-xs leading-snug text-center">{{ $sport['name'] }}</span>
                                 </button>
                             @endforeach
                         </div>
 
-                        <!-- KOTAK INPUT TAMBAHAN KETIKA 'LAINNYA' DIPILIH -->
-                        <div id="custom_sport_wrapper" class="{{ $hasCustomSelected ? '' : 'hidden' }} mt-4 pt-4 border-t border-gray-100">
-                            <label class="block text-xs font-bold text-gray-700 mb-2">Tuliskan Jenis Olahraga Lainnya:</label>
+                        <!-- Form Input Tambahan untuk Kategori Lainnya -->
+                        <div id="custom_sport_wrapper" class="{{ $hasCustomSelected ? '' : 'hidden' }} bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                            <label class="block text-xs font-bold text-slate-800">
+                                Tambah Olahraga Lainnya:
+                            </label>
                             <div class="flex gap-2">
-                                <input type="text" id="custom_sport_input" placeholder="Contoh: Bulu Tangkis, Tenis, dll..." 
-                                    class="flex-1 rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50/30">
-                                <button type="button" onclick="addCustomSport()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-5 py-3 rounded-2xl text-xs transition">
+                                <input type="text" id="custom_sport_input" placeholder="Contoh: Tenis Meja, Bela Diri, dsb."
+                                    class="flex-1 rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                                <button type="button" onclick="addCustomSport()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition cursor-pointer">
                                     Tambah
                                 </button>
                             </div>
+                            <div id="custom_sports_badges" class="flex flex-wrap gap-2 pt-1">
+                                @foreach($customSports as $customSport)
+                                    <span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ $customSport }}
+                                        <button type="button" onclick="removeCustomSportBadge(this, '{{ $customSport }}')" class="hover:text-rose-700 text-emerald-700 font-extrabold ml-1 cursor-pointer">&times;</button>
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. DURASI LATIHAN & EVALUASI TARGET 30 MENIT -->
+                    <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                2. Durasi Latihan Fisik
+                            </h3>
+                            <p class="text-xs text-slate-500">Rekomendasi Kemenkes RI: Minimal 30 menit setiap hari</p>
                         </div>
 
-                        <!-- Daftar Badge Olahraga Lainnya yang Ditambahkan -->
-                        <div id="custom_sports_badges" class="flex flex-wrap gap-2 mt-3">
-                            @foreach($customSports as $customSport)
-                                <div class="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold">
-                                    <span>{{ trim($customSport) }}</span> 
-                                    <button type="button" onclick="removeCustomSportBadge(this, '{{ trim($customSport) }}')" class="text-red-500 hover:text-red-700 font-bold ml-1">&times;</button>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div class="space-y-3">
+                                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+                                    <input type="number" name="durasi" id="durasi_input" min="1" max="600"
+                                        value="{{ old('durasi', optional($journal)->durasi) }}"
+                                        placeholder="0" required
+                                        oninput="evaluateDuration()"
+                                        class="w-28 bg-transparent text-3xl sm:text-4xl font-black text-slate-900 focus:outline-none text-center">
+                                    <span class="text-sm font-bold text-slate-500 uppercase tracking-wider">Menit</span>
                                 </div>
+
+                                <!-- Preset tombol cepat -->
+                                <div class="grid grid-cols-4 gap-2">
+                                    @foreach([15, 30, 45, 60] as $mins)
+                                        <button type="button" onclick="setDurasi({{ $mins }})" class="py-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer shadow-2xs text-center">
+                                            {{ $mins }} m
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Live Card Evaluasi Target -->
+                            <div id="target_card" class="p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-slate-50 border-slate-200">
+                                <div class="flex items-center gap-2">
+                                    <span id="target_icon" class="text-xl">⏱️</span>
+                                    <p id="target_title" class="text-xs font-black text-slate-800 uppercase tracking-wider">
+                                        Status Target Harian
+                                    </p>
+                                </div>
+                                <p id="target_desc" class="text-xs text-slate-600 leading-relaxed font-medium">
+                                    Masukkan durasi olahraga untuk melihat pencapaian target aktivitas harian.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. INTENSITAS LATIHAN -->
+                    <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                3. Tingkat Intensitas
+                            </h3>
+                            <p class="text-xs text-slate-500">Pilih intensitas latihan yang sesuai dengan denyut tubuhmu</p>
+                        </div>
+
+                        @php
+                            $currentIntensitas = old('intensitas', optional($journal)->intensitas ?? 'Sedang');
+                            $intensities = [
+                                [
+                                    'name' => 'Ringan',
+                                    'desc' => 'Bernapas normal dan santai, masih bisa mengobrol santai tanpa terengah.',
+                                    'example' => 'Jalan santai, peregangan otot, yoga ringan',
+                                    'level' => '1 Tingkat Energi'
+                                ],
+                                [
+                                    'name' => 'Sedang',
+                                    'desc' => 'Napas agak cepat dan berkeringat, masih bisa berbicara tapi tidak bernyanyi.',
+                                    'example' => 'Jalan cepat, senam aerobik, bersepeda rekreasi',
+                                    'level' => '2 Tingkat Energi'
+                                ],
+                                [
+                                    'name' => 'Tinggi',
+                                    'desc' => 'Napas berat dan berkeringat deras, hanya mampu berbicara beberapa kata singkat.',
+                                    'example' => 'Lari cepat (jogging cepat), futsal, renang cepat',
+                                    'level' => '3 Tingkat Energi'
+                                ],
+                            ];
+                        @endphp
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            @foreach($intensities as $item)
+                                @php $isCheck = ($currentIntensitas === $item['name']); @endphp
+                                <label class="intensity-card p-4 rounded-2xl border cursor-pointer transition flex flex-col justify-between space-y-3 {{ $isCheck ? 'border-emerald-600 bg-emerald-50/50 shadow-sm ring-1 ring-emerald-500' : 'border-slate-200 hover:border-slate-300 bg-white' }}">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div class="flex items-center gap-2.5">
+                                            <input type="radio" name="intensitas" value="{{ $item['name'] }}" {{ $isCheck ? 'checked' : '' }} required onchange="updateIntensitasUI()" class="text-emerald-600 focus:ring-emerald-500">
+                                            <span class="text-sm font-extrabold text-slate-900">{{ $item['name'] }}</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-slate-600 leading-snug">{{ $item['desc'] }}</p>
+                                    <div class="pt-2 border-t border-slate-100 text-[10px] text-slate-500">
+                                        <span class="font-bold text-slate-700">Contoh:</span> {{ $item['example'] }}
+                                    </div>
+                                </label>
                             @endforeach
                         </div>
                     </div>
 
-                    <!-- Grid Durasi & Intensitas -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        <!-- 2. Durasi Latihan -->
-                        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4 flex flex-col justify-between">
-                            <div>
-                                <h3 class="font-extrabold text-gray-900 text-base mb-4">Durasi Latihan</h3>
-                                <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex items-center justify-between">
-                                    <input type="number" name="durasi" id="durasi_input" min="1" value="{{ old('durasi', optional($journal)->durasi) }}" placeholder="0" required
-                                        class="w-24 bg-transparent text-3xl font-extrabold text-gray-900 focus:outline-none text-center">
-                                    <span class="text-sm font-bold text-gray-400 uppercase tracking-wider">Menit</span>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-4 gap-2 pt-2">
-                                @foreach([15, 30, 45, 60] as $mins)
-                                    <button type="button" onclick="setDurasi({{ $mins }})" class="py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 text-xs font-bold rounded-xl transition">
-                                        {{ $mins }}m
-                                    </button>
-                                @endforeach
-                            </div>
+                    <!-- 4. PERASAAN & CATATAN LATIHAN -->
+                    <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                4. Perasaan Setelah Latihan & Catatan
+                            </h3>
+                            <p class="text-xs text-slate-500">Ungkapkan apa yang kamu rasakan setelah bergerak aktif</p>
                         </div>
 
-                        <!-- 3. Intensitas -->
-                        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
-                            <h3 class="font-extrabold text-gray-900 text-base">Intensitas</h3>
-                            
-                            <div class="space-y-3">
-                                @php
-                                    $intensities = [
-                                        ['name' => 'Rendah', 'desc' => 'Bisa bicara lancar', 'bolts' => 1],
-                                        ['name' => 'Sedang', 'desc' => 'Napas agak tersengat', 'bolts' => 2],
-                                        ['name' => 'Tinggi', 'desc' => 'Sangat berkeringat', 'bolts' => 3],
-                                    ];
-                                    $currentIntensitas = old('intensitas', optional($journal)->intensitas);
-                                @endphp
+                        <input type="hidden" name="perasaan" id="selected_perasaan" value="{{ old('perasaan', optional($journal)->perasaan ?? 'Berenergi & Segar') }}" required>
 
-                                @foreach($intensities as $item)
-                                    <label class="flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition {{ $currentIntensitas == $item['name'] ? 'border-emerald-600 bg-emerald-50/30' : 'border-gray-200 hover:border-gray-300' }}">
-                                        <div class="identity-wrapper flex items-center gap-3">
-                                            <input type="radio" name="intensitas" value="{{ $item['name'] }}" {{ $currentIntensitas == $item['name'] ? 'checked' : '' }} class="text-emerald-600 focus:ring-emerald-500" required onchange="updateIntensitasUI()">
-                                            <div>
-                                                <p class="text-xs font-bold text-gray-900">{{ $item['name'] }}</p>
-                                                <p class="text-[10px] text-gray-400">{{ $item['desc'] }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="flex text-emerald-500 text-xs font-bold gap-0.5">
-                                            @for($i=0; $i<$item['bolts']; $i++) ⚡ @endfor
-                                        </div>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
+                        @php
+                            $savedPerasaan = old('perasaan', optional($journal)->perasaan ?? 'Berenergi & Segar');
+                            $moods = [
+                                ['name' => 'Lelah tapi Puas', 'emoji' => '😌'],
+                                ['name' => 'Berenergi & Segar', 'emoji' => '⚡'],
+                                ['name' => 'Santai & Tenang', 'emoji' => '🌿'],
+                                ['name' => 'Bersemangat', 'emoji' => '🔥'],
+                                ['name' => 'Sangat Lelah', 'emoji' => '😮‍💨'],
+                            ];
+                        @endphp
 
-                    </div>
-
-                    <!-- 4. Perasaan & Catatan -->
-                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
-                        <h3 class="font-extrabold text-gray-900 text-base">Bagaimana perasaanmu setelah olahraga?</h3>
-                        
-                        <input type="hidden" name="perasaan" id="selected_perasaan" value="{{ old('perasaan', optional($journal)->perasaan) }}" required>
-
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                            @php
-                                $moods = [
-                                    ['name' => 'Lelah', 'emoji' => '😩'],
-                                    ['name' => 'Biasa', 'emoji' => '😐'],
-                                    ['name' => 'Senang', 'emoji' => '😊'],
-                                    ['name' => 'Semangat', 'emoji' => '😁'],
-                                    ['name' => 'Luar Biasa', 'emoji' => '✨'],
-                                ];
-                            @endphp
-
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                             @foreach($moods as $mood)
-                                <button type="button" 
+                                @php $isMoodActive = ($savedPerasaan === $mood['name']); @endphp
+                                <button type="button"
                                     onclick="selectMood('{{ $mood['name'] }}', this)"
-                                    class="mood-btn p-3 rounded-2xl border text-center flex flex-col items-center gap-1.5 transition {{ (old('perasaan', optional($journal)->perasaan) == $mood['name']) ? 'border-emerald-600 bg-emerald-50/40 text-emerald-900 shadow-sm' : 'border-gray-200 hover:border-emerald-300 text-gray-700 bg-white' }}">
+                                    class="mood-btn p-3 rounded-2xl border text-center flex flex-col items-center justify-center gap-1.5 transition cursor-pointer {{ $isMoodActive ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold shadow-sm ring-1 ring-emerald-500' : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white font-medium hover:bg-slate-50' }}">
                                     <span class="text-2xl">{{ $mood['emoji'] }}</span>
-                                    <span class="text-xs font-bold">{{ $mood['name'] }}</span>
+                                    <span class="text-xs text-center leading-tight">{{ $mood['name'] }}</span>
                                 </button>
                             @endforeach
                         </div>
 
-                        <div class="pt-2">
-                            <textarea name="catatan" rows="3" 
-                                class="w-full rounded-2xl border border-gray-200 p-4 text-sm focus:border-emerald-500 focus:ring-emerald-500 bg-gray-50/30"
-                                placeholder="Catatan tambahan (contoh: rute lari baru atau rekor pribadi)...">{{ old('catatan', optional($journal)->catatan) }}</textarea>
+                        <div class="space-y-2 pt-2">
+                            <label class="block text-xs font-bold text-slate-800">
+                                Catatan Latihan Tambahan (Opsional):
+                            </label>
+                            <textarea name="catatan" rows="3"
+                                class="w-full rounded-2xl border border-slate-300 p-4 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50/50"
+                                placeholder="Contoh: Berhasil lari 4 putaran lapangan sekolah bersama teman, kondisi tubuh terasa segar...">{{ old('catatan', optional($journal)->catatan) }}</textarea>
                         </div>
+                    </div>
+
+                    <!-- Tombol Simpan Bawah -->
+                    <div class="flex items-center justify-end gap-3 pt-2">
+                        <button type="submit" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-8 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition text-sm cursor-pointer">
+                            <span>💾</span> Simpan Jurnal Olahraga
+                        </button>
                     </div>
 
                 </div>
 
-                <!-- KOLOM KANAN (Sidebar Widget) -->
+                <!-- KOLOM KANAN (SIDEBAR & REKAP MINGGUAN) -->
                 <div class="space-y-6">
-                    
-                    <!-- Weekly Streak Card -->
-                    <div class="bg-blue-900 text-white p-6 rounded-3xl shadow-xl space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-blue-300">Weekly Streak</span>
+
+                    <!-- KARTU WEEKLY STREAK -->
+                    <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl space-y-5 border border-slate-800">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                                WEEKLY STREAK
+                            </span>
+                            <span class="text-xs text-slate-400 font-semibold">Minggu Ini</span>
                         </div>
+
                         <div>
-                            <h4 class="text-3xl font-extrabold flex items-baseline gap-2">
-                                {{ $totalDaysActive ?? 0 }} <span class="text-xs font-bold text-blue-200">Hari minggu ini</span>
-                            </h4>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-4xl font-black text-white">{{ $totalDaysActive ?? 0 }}</span>
+                                <span class="text-sm font-bold text-slate-300">Hari Aktif</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Konsistensi bergerak setiap hari kunci kebugaran jasmani.</p>
                         </div>
-                        <div class="grid grid-cols-7 gap-1 pt-2">
+
+                        <!-- 7 Hari (Senin s/d Minggu) -->
+                        <div class="grid grid-cols-7 gap-1 pt-1">
                             @php
-                                $daysMapping = [
-                                    1 => 'Senin',
-                                    2 => 'Selasa',
-                                    3 => 'Rabu',
-                                    4 => 'Kamis',
-                                    5 => 'Jumat',
-                                    6 => 'Sabtu',
-                                    7 => 'Minggu',
+                                $daysLabel = [
+                                    1 => 'Sen',
+                                    2 => 'Sel',
+                                    3 => 'Rab',
+                                    4 => 'Kam',
+                                    5 => 'Jum',
+                                    6 => 'Sab',
+                                    7 => 'Min',
                                 ];
                                 $todayNum = \Carbon\Carbon::today()->format('N');
                             @endphp
-                            
-                            @foreach($daysMapping as $dayIndex => $dayLabel)
+
+                            @foreach($daysLabel as $dayIdx => $dayName)
                                 @php
-                                    $isCompleted = isset($weeklyChartData[$dayIndex]) && $weeklyChartData[$dayIndex]['active'];
-                                    $isToday = ($todayNum == $dayIndex);
+                                    $isCompleted = isset($weeklyChartData[$dayIdx]) && $weeklyChartData[$dayIdx]['active'];
+                                    $isToday = ($todayNum == $dayIdx);
                                 @endphp
-                                <div class="flex flex-col items-center gap-1">
-                                    <div class="w-8 h-8 rounded-full 
-                                        {{ $isCompleted 
-                                            ? 'bg-emerald-400 text-blue-950 font-bold' 
-                                            : ($isToday 
-                                                ? 'bg-white text-blue-900 font-extrabold shadow-md ring-2 ring-emerald-400' 
-                                                : 'bg-blue-950 text-blue-400') }} 
-                                        flex items-center justify-center text-xs">
+                                <div class="flex flex-col items-center gap-1.5">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition
+                                        {{ $isCompleted
+                                            ? 'bg-emerald-400 text-slate-950 shadow-md shadow-emerald-400/20'
+                                            : ($isToday
+                                                ? 'bg-slate-800 border-2 border-emerald-400 text-white'
+                                                : 'bg-slate-800 text-slate-500') }}">
                                         {{ $isCompleted ? '✓' : '' }}
                                     </div>
-                                    <span class="text-[10px] text-blue-300 font-bold">{{ $dayLabel }}</span>
+                                    <span class="text-[10px] font-bold {{ $isToday ? 'text-emerald-400' : 'text-slate-400' }}">
+                                        {{ $dayName }}
+                                    </span>
                                 </div>
                             @endforeach
                         </div>
                     </div>
 
-                    <!-- Tips Sehat Hari Ini -->
-                    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4">
-                        <h3 class="font-extrabold text-gray-900 text-sm">Tips Sehat Hari Ini</h3>
-                        
-                        <div class="space-y-3">
-                            <div class="flex items-start gap-3 bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100/50">
-                                <span class="text-emerald-600 bg-emerald-100 p-1.5 rounded-xl text-xs">💧</span>
-                                <p class="text-xs text-gray-600 leading-relaxed">Minum minimal 250ml air putih segera setelah berolahraga.</p>
+                    <!-- RINGKASAN STATISTIK MINGGUAN -->
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="text-sm font-black text-slate-900 border-b border-slate-100 pb-3 uppercase tracking-wider">
+                            Statistik Olahraga Minggu Ini
+                        </h4>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Durasi</p>
+                                <p class="text-xl font-black text-slate-900 mt-1">{{ $totalDuration ?? 0 }} <span class="text-xs font-semibold text-slate-500">Mnt</span></p>
                             </div>
-                            <div class="flex items-start gap-3 bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100/50">
-                                <span class="text-emerald-600 bg-emerald-100 p-1.5 rounded-xl text-xs">🧘</span>
-                                <p class="text-xs text-gray-600 leading-relaxed">Jangan lupa pemanasan 5 menit untuk menghindari cedera otot.</p>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rata-rata / Sesi</p>
+                                <p class="text-xl font-black text-slate-900 mt-1">{{ $averageDuration ?? 0 }} <span class="text-xs font-semibold text-slate-500">Mnt</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PANDUAN AKTIVITAS SEHAT (KEMENKES RI) -->
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="text-sm font-black text-slate-900 border-b border-slate-100 pb-3 uppercase tracking-wider">
+                            Pedoman Olahraga Sehat
+                        </h4>
+
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3 bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100">
+                                <span class="text-lg">💧</span>
+                                <div>
+                                    <p class="text-xs font-extrabold text-emerald-950">Hidrasi Sebelum & Sesudah</p>
+                                    <p class="text-[11px] text-emerald-800 leading-snug mt-0.5">Minum 1 gelas air putih sebelum mulai dan cukupi cairan setelah berolahraga.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 bg-blue-50/70 p-3.5 rounded-2xl border border-blue-100">
+                                <span class="text-lg">🤸</span>
+                                <div>
+                                    <p class="text-xs font-extrabold text-blue-950">Pemanasan & Pendinginan</p>
+                                    <p class="text-[11px] text-blue-800 leading-snug mt-0.5">Luangkan 5 menit pemanasan agar otot siap dan 5 menit pendinginan untuk pemulihan.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100">
+                                <span class="text-lg">🎯</span>
+                                <div>
+                                    <p class="text-xs font-extrabold text-amber-950">Target 30 Menit / Hari</p>
+                                    <p class="text-[11px] text-amber-800 leading-snug mt-0.5">Mencapai 30 menit sehari menjaga fungsi jantung, stamina belajar, dan daya tahan tubuh.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -296,50 +446,59 @@
             </div>
         </form>
 
+        <!-- FORM HIDDEN UNTUK KOSONGKAN JURNAL -->
+        @if($journal)
+            <form id="form-reset-olahraga" action="{{ route('student.olahraga.destroy') }}" method="POST" class="hidden">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endif
+
     </main>
 </div>
 
 <script>
-    // Fungsi untuk multi-select jenis olahraga
+    // 1. Toggle Pilihan Olahraga Preset
     function toggleSport(sportName, element) {
         const container = document.getElementById('hidden_sports_container');
         const customWrapper = document.getElementById('custom_sport_wrapper');
 
-        // Jika tombol yang diklik adalah "Lainnya"
         if (sportName === 'Lainnya') {
             const isSelected = element.classList.contains('border-emerald-600');
             if (!isSelected) {
                 customWrapper.classList.remove('hidden');
-                element.classList.remove('border-gray-200', 'text-gray-700', 'bg-white');
-                element.classList.add('border-emerald-600', 'bg-emerald-50/40', 'text-emerald-900', 'shadow-sm');
+                element.classList.remove('border-slate-200', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
+                element.classList.add('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
             } else {
                 customWrapper.classList.add('hidden');
-                element.classList.remove('border-emerald-600', 'bg-emerald-50/40', 'text-emerald-900', 'shadow-sm');
-                element.classList.add('border-gray-200', 'text-gray-700', 'bg-white');
+                element.classList.remove('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+                element.classList.add('border-slate-200', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
             }
+            updateSportsCount();
             return;
         }
 
         const existingInput = container.querySelector(`input[data-sport="${sportName}"]`);
-
         if (existingInput) {
             existingInput.remove();
-            element.classList.remove('border-emerald-600', 'bg-emerald-50/40', 'text-emerald-900', 'shadow-sm');
-            element.classList.add('border-gray-200', 'text-gray-700', 'bg-white');
+            element.classList.remove('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+            element.classList.add('border-slate-200', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
         } else {
             const newInput = document.createElement('input');
             newInput.type = 'hidden';
             newInput.name = 'jenis_olahraga[]';
             newInput.value = sportName;
             newInput.setAttribute('data-sport', sportName);
+            newInput.className = 'hidden-sport-input';
             container.appendChild(newInput);
 
-            element.classList.remove('border-gray-200', 'text-gray-700', 'bg-white');
-            element.classList.add('border-emerald-600', 'bg-emerald-50/40', 'text-emerald-900', 'shadow-sm');
+            element.classList.remove('border-slate-200', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
+            element.classList.add('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
         }
+        updateSportsCount();
     }
 
-    // Fungsi untuk menambahkan teks olahraga kustom ke dalam form
+    // 2. Tambah Jenis Olahraga Kustom
     function addCustomSport() {
         const inputField = document.getElementById('custom_sport_input');
         const sportName = inputField.value.trim();
@@ -348,81 +507,128 @@
         const container = document.getElementById('hidden_sports_container');
         const badgesContainer = document.getElementById('custom_sports_badges');
 
-        // Cek apakah input dengan nama yang sama sudah ada
         if (container.querySelector(`input[data-sport="${sportName}"]`)) {
             inputField.value = '';
             return;
         }
 
-        // Buat input hidden untuk dikirim ke Controller
         const newInput = document.createElement('input');
         newInput.type = 'hidden';
         newInput.name = 'jenis_olahraga[]';
         newInput.value = sportName;
         newInput.setAttribute('data-sport', sportName);
+        newInput.className = 'hidden-sport-input';
         container.appendChild(newInput);
 
-        // Buat badge visual dengan template literal yang aman
-        const badge = document.createElement('div');
-        badge.className = 'inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold';
-        
-        const spanText = document.createElement('span');
-        spanText.textContent = sportName;
-        
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'text-red-500 hover:text-red-700 font-bold ml-1';
-        removeBtn.innerHTML = '&times;';
-        removeBtn.onclick = function() {
+        const badge = document.createElement('span');
+        badge.className = 'inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-full text-xs font-bold';
+        badge.innerHTML = `${sportName} <button type="button" class="hover:text-rose-700 text-emerald-700 font-extrabold ml-1 cursor-pointer">&times;</button>`;
+        badge.querySelector('button').onclick = function() {
             removeCustomSportBadge(badge, sportName);
         };
-
-        badge.appendChild(spanText);
-        badge.appendChild(removeBtn);
         badgesContainer.appendChild(badge);
 
         inputField.value = '';
+        updateSportsCount();
     }
 
-    // Fungsi terpisah untuk menghapus badge kustom dan input hidden terkait
-    function removeCustomSportBadge(badgeElement, sportName) {
-        badgeElement.remove();
+    // 3. Hapus Jenis Olahraga Kustom
+    function removeCustomSportBadge(badgeEl, sportName) {
+        badgeEl.remove();
         const container = document.getElementById('hidden_sports_container');
         const inputEl = container.querySelector(`input[data-sport="${sportName}"]`);
         if (inputEl) inputEl.remove();
+        updateSportsCount();
     }
 
-    function selectMood(moodName, element) {
-        document.getElementById('selected_perasaan').value = moodName;
-        document.querySelectorAll('.mood-btn').forEach(btn => {
-            btn.classList.remove('border-emerald-600', 'bg-emerald-50/40', 'text-emerald-900', 'shadow-sm');
-            btn.classList.add('border-gray-200', 'text-gray-700', 'bg-white');
-        });
-        element.classList.remove('border-gray-200', 'text-gray-700', 'bg-white');
-        element.classList.add('border-emerald-600', 'bg-emerald-50/40', 'text-emerald-900', 'shadow-sm');
+    // 4. Update Counter Olahraga Terpilih
+    function updateSportsCount() {
+        const inputs = document.querySelectorAll('#hidden_sports_container input[name="jenis_olahraga[]"]');
+        const count = inputs.length;
+        const countBadge = document.getElementById('selected_sports_count');
+        if (countBadge) {
+            countBadge.textContent = `${count} Dipilih`;
+        }
     }
 
+    // 5. Pilih Durasi Preset
     function setDurasi(minutes) {
-        document.getElementById('durasi_input').value = minutes;
+        const input = document.getElementById('durasi_input');
+        input.value = minutes;
+        evaluateDuration();
     }
 
-    // Fungsi untuk memperbarui tampilan UI saat radio button intensitas dipilih
+    // 6. Evaluasi Live Durasi & Target
+    function evaluateDuration() {
+        const input = document.getElementById('durasi_input');
+        const minutes = parseInt(input.value) || 0;
+        const card = document.getElementById('target_card');
+        const icon = document.getElementById('target_icon');
+        const title = document.getElementById('target_title');
+        const desc = document.getElementById('target_desc');
+
+        if (minutes <= 0) {
+            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-slate-50 border-slate-200';
+            icon.textContent = '⏱️';
+            title.textContent = 'Status Target Harian';
+            title.className = 'text-xs font-black text-slate-800 uppercase tracking-wider';
+            desc.textContent = 'Masukkan durasi olahraga untuk melihat pencapaian target aktivitas harian.';
+            desc.className = 'text-xs text-slate-600 leading-relaxed font-medium';
+        } else if (minutes < 30) {
+            const sisa = 30 - minutes;
+            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-amber-50 border-amber-200';
+            icon.textContent = '⏳';
+            title.textContent = `Perlu ${sisa} Menit Lagi`;
+            title.className = 'text-xs font-black text-amber-900 uppercase tracking-wider';
+            desc.textContent = `Kamu berolahraga ${minutes} menit. Tambah ${sisa} menit lagi agar memenuhi standar harian 30 menit dari Kemenkes RI.`;
+            desc.className = 'text-xs text-amber-800 leading-relaxed font-medium';
+        } else {
+            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-emerald-50 border-emerald-200';
+            icon.textContent = '🏆';
+            title.textContent = 'Target Tercapai!';
+            title.className = 'text-xs font-black text-emerald-950 uppercase tracking-wider';
+            desc.textContent = `Luar biasa! Durasi ${minutes} menit telah memenuhi bahkan melampaui target minimal 30 menit kebugaran fisik harian.`;
+            desc.className = 'text-xs text-emerald-900 leading-relaxed font-medium';
+        }
+    }
+
+    // 7. Update UI Intensitas
     function updateIntensitasUI() {
         document.querySelectorAll('input[name="intensitas"]').forEach(radio => {
-            const label = radio.closest('label');
+            const card = radio.closest('.intensity-card');
             if (radio.checked) {
-                label.classList.remove('border-gray-200', 'hover:border-gray-300');
-                label.classList.add('border-emerald-600', 'bg-emerald-50/30');
+                card.classList.remove('border-slate-200', 'hover:border-slate-300', 'bg-white');
+                card.classList.add('border-emerald-600', 'bg-emerald-50/50', 'shadow-sm', 'ring-1', 'ring-emerald-500');
             } else {
-                label.classList.remove('border-emerald-600', 'bg-emerald-50/30');
-                label.classList.add('border-gray-200', 'hover:border-gray-300');
+                card.classList.remove('border-emerald-600', 'bg-emerald-50/50', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+                card.classList.add('border-slate-200', 'hover:border-slate-300', 'bg-white');
             }
         });
     }
 
-    // Jalankan saat halaman dimuat agar state awal dari old() / database ikut merender warna yang benar
+    // 8. Pilih Mood/Perasaan
+    function selectMood(moodName, element) {
+        document.getElementById('selected_perasaan').value = moodName;
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.classList.remove('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+            btn.classList.add('border-slate-200', 'hover:border-slate-300', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
+        });
+        element.classList.remove('border-slate-200', 'hover:border-slate-300', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
+        element.classList.add('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+    }
+
+    // 9. Konfirmasi Kosongkan Jurnal
+    function confirmReset() {
+        if (confirm('Apakah kamu yakin ingin mengosongkan jurnal olahraga hari ini? Data di dashboard dan catatan akan direset.')) {
+            document.getElementById('form-reset-olahraga').submit();
+        }
+    }
+
+    // 10. Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
+        updateSportsCount();
         updateIntensitasUI();
+        evaluateDuration();
     });
 </script>
 @endsection

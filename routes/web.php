@@ -131,7 +131,8 @@ Route::middleware(['auth'])->group(function () {
         // DIREVISI: Rute untuk Halaman & Proses Simpan Jurnal Olahraga (Rajin Olahraga) dialihkan ke OlahragaController
         Route::get('/olahraga', [OlahragaController::class, 'index'])->name('olahraga');
         Route::post('/olahraga', [OlahragaController::class, 'store'])->name('olahraga.store');
-        Route::post('/olahraga/update', [OlahragaController::class, 'update'])->name('olahraga.update'); // TAMBAHAN: Mengatasi error RouteNotConfigured/RouteNotFound
+        Route::post('/olahraga/update', [OlahragaController::class, 'update'])->name('olahraga.update');
+        Route::delete('/olahraga', [OlahragaController::class, 'destroy'])->name('olahraga.destroy');
 
         // TAMBAHAN: Rute untuk Halaman & Proses Simpan Jurnal Makan Sehat & Bergizi
         Route::get('/makan-sehat', [StudentDashboardController::class, 'makanSehat'])->name('makan-sehat');

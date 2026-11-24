@@ -22,6 +22,7 @@ class OlahragaJournal extends Model
      */
     protected $fillable = [
         'user_id',
+        'date',
         'jenis_olahraga',
         'durasi',
         'intensitas',
