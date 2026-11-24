@@ -39,9 +39,15 @@
                             KEBIASAAN 1
                         </span>
                         @if($journal)
-                            <span class="px-3 py-1 bg-emerald-500 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
-                                Terisi: {{ $journal->status_waktu }} ({{ $journal->waktu_bangun }} WIB)
-                            </span>
+                            @if(str_contains(strtolower($journal->status_waktu), 'kesiangan'))
+                                <span class="px-3 py-1 bg-amber-400 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
+                                    Tercatat: Kesiangan ({{ $journal->waktu_bangun }} WIB)
+                                </span>
+                            @else
+                                <span class="px-3 py-1 bg-emerald-500 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
+                                    Tercatat: Tepat Waktu ({{ $journal->waktu_bangun }} WIB)
+                                </span>
+                            @endif
                         @else
                             <span class="px-3 py-1 bg-slate-800 text-slate-300 text-[11px] font-extrabold rounded-full uppercase tracking-wider border border-slate-700">
                                 Belum Mengisi Hari Ini
@@ -52,7 +58,7 @@
                         Bangun Pagi
                     </h1>
                     <p class="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed">
-                        Awal hari yang teratur dan disiplin membuka energi positif, kejernihan berpikir, serta kesiapan optimal untuk belajar di sekolah.
+                        Waktu pengisian mengikuti jam otomatis pada HP atau laptop kamu. Jika mengisi lewat dari pukul 05:30 WIB, sistem otomatis mencatat kesiangan namun kamu tetap dapat mengirim jurnal.
                     </p>
                 </div>
 
@@ -85,53 +91,68 @@
         <form id="form-bangun-pagi" action="{{ route('student.bangun-pagi.update') }}" method="POST">
             @csrf
 
+            <!-- Hidden input waktu bangun dan status waktu otomatis dari jam device -->
+            <input type="hidden" name="waktu_bangun" id="waktu_bangun_input" value="{{ old('waktu_bangun', optional($journal)->waktu_bangun ?? '') }}">
+            <input type="hidden" name="status_waktu" id="status_waktu_input" value="{{ old('status_waktu', optional($journal)->status_waktu ?? '') }}">
+
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 <!-- KOLOM KIRI & TENGAH (FORMULIR INPUT) -->
                 <div class="lg:col-span-2 space-y-6">
 
-                    <!-- 1. WAKTU BANGUN & EVALUASI OTOMATIS -->
+                    <!-- 1. WAKTU TERDETEKSI DARI DEVICE & EVALUASI OTOMATIS -->
                     <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
-                        <div class="border-b border-slate-100 pb-4">
-                            <h3 class="text-base sm:text-lg font-black text-slate-900">
-                                1. Waktu Bangun Pagi
-                            </h3>
-                            <p class="text-xs text-slate-500">Pilih jam bangunmu pagi ini. Sistem akan mengevaluasi ketepatan waktu secara otomatis.</p>
+                        <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                    1. Waktu Terdeteksi Otomatis
+                                </h3>
+                                <p class="text-xs text-slate-500">
+                                    Mengikuti jam perangkat (HP / Laptop). Pengisian lewat dari pukul 05:30 WIB tercatat kesiangan.
+                                </p>
+                            </div>
+                            <span class="text-[11px] font-bold px-3 py-1 bg-slate-100 text-slate-700 rounded-full w-fit">
+                                Jam Otomatis Device
+                            </span>
                         </div>
 
-                        <input type="hidden" name="status_waktu" id="status_waktu_input" value="{{ old('status_waktu', optional($journal)->status_waktu ?? 'Tepat Waktu') }}">
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                            <div class="space-y-3">
-                                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
-                                    <input type="time" name="waktu_bangun" id="waktu_bangun_input"
-                                        value="{{ old('waktu_bangun', $defaultTime) }}" required
-                                        onchange="evaluateWakeTime()"
-                                        class="bg-transparent text-2xl sm:text-3xl font-black text-slate-900 focus:outline-none cursor-pointer">
-                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">WIB</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+                            <!-- Display Jam Device -->
+                            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col justify-between space-y-3">
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                                        Waktu Pengisian Saat Ini
+                                    </p>
+                                    <div class="flex items-baseline gap-2 mt-1">
+                                        <span id="live_clock_display" class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                                            --:--
+                                        </span>
+                                        <span class="text-xs font-extrabold text-slate-500 uppercase">WIB</span>
+                                    </div>
                                 </div>
-
-                                <!-- Preset Cepat -->
-                                <div class="grid grid-cols-4 gap-2">
-                                    @foreach(['04:00', '04:30', '05:00', '05:30'] as $preset)
-                                        <button type="button" onclick="setTimePreset('{{ $preset }}')" class="py-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer shadow-2xs text-center">
-                                            {{ $preset }}
-                                        </button>
-                                    @endforeach
+                                <div class="text-[11px] text-slate-500 flex items-center gap-1.5 font-medium">
+                                    <span>📱</span>
+                                    <span>Tersinkronisasi otomatis tanpa perlu memilih jam manual.</span>
                                 </div>
                             </div>
 
                             <!-- Live Card Evaluasi Ketepatan Waktu -->
-                            <div id="status_card" class="p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-emerald-50 border-emerald-200">
-                                <div class="flex items-center gap-2">
-                                    <span id="status_icon" class="text-xl">🏆</span>
-                                    <p id="status_title" class="text-xs font-black text-emerald-950 uppercase tracking-wider">
-                                        Tepat Waktu (Sangat Baik)
+                            <div id="status_card" class="p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-slate-50 border-slate-200">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span id="status_icon" class="text-2xl">⏳</span>
+                                        <p id="status_title" class="text-xs font-black uppercase tracking-wider text-slate-800">
+                                            Mengevaluasi Waktu...
+                                        </p>
+                                    </div>
+                                    <p id="status_desc" class="text-xs text-slate-600 leading-relaxed font-medium">
+                                        Memeriksa jam perangkat Anda.
                                     </p>
                                 </div>
-                                <p id="status_desc" class="text-xs text-emerald-900 leading-relaxed font-medium">
-                                    Hebat! Bangun sebelum fajar memberikan energi terbaik dan ketenangan mengawali hari.
-                                </p>
+                                <div class="pt-2 border-t border-slate-200/60 text-[11px] font-semibold text-slate-500 flex items-center gap-1.5">
+                                    <span>ℹ️</span>
+                                    <span>Batas waktu bangun tepat: <strong>05:30 WIB</strong>.</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -142,7 +163,7 @@
                             <h3 class="text-base sm:text-lg font-black text-slate-900">
                                 2. Rutinitas Pagi Positif
                             </h3>
-                            <p class="text-xs text-slate-500">Centang kegiatan positif yang sudah kamu lakukan setelah bangun pagi</p>
+                            <p class="text-xs text-slate-500">Centang kegiatan positif yang sudah kamu lakukan pagi ini</p>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -236,7 +257,7 @@
                             </label>
                             <textarea name="refleksi" rows="3"
                                 class="w-full rounded-2xl border border-slate-300 p-4 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50/50"
-                                placeholder="Contoh: Hari ini saya bangun lebih segar, siap mengikuti pelajaran matematika dengan antusias dan ingin berbuat baik kepada sesama...">{{ old('refleksi', optional($journal)->refleksi) }}</textarea>
+                                placeholder="Contoh: Hari ini saya bangun lebih segar, siap mengikuti pelajaran dengan antusias dan ingin berbuat baik kepada sesama...">{{ old('refleksi', optional($journal)->refleksi) }}</textarea>
                         </div>
                     </div>
 
@@ -327,29 +348,22 @@
                     <!-- MANFAAT BANGUN PAGI -->
                     <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
                         <h4 class="text-sm font-black text-slate-900 border-b border-slate-100 pb-3 uppercase tracking-wider">
-                            Manfaat Utama Bangun Pagi
+                            Aturan Waktu Bangun Pagi
                         </h4>
 
                         <div class="space-y-3">
-                            <div class="flex items-start gap-3 bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100">
-                                <span class="text-lg">☀️</span>
-                                <div>
-                                    <p class="text-xs font-extrabold text-amber-950">Fokus Belajar Lebih Tajam</p>
-                                    <p class="text-[11px] text-amber-800 leading-snug mt-0.5">Otak memiliki gelombang alfa yang optimal di pagi hari untuk menyerap materi pelajaran baru.</p>
-                                </div>
-                            </div>
                             <div class="flex items-start gap-3 bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100">
-                                <span class="text-lg">🧘</span>
+                                <span class="text-lg">⏰</span>
                                 <div>
-                                    <p class="text-xs font-extrabold text-emerald-950">Bebas Stres Terburu-buru</p>
-                                    <p class="text-[11px] text-emerald-800 leading-snug mt-0.5">Memiliki waktu luang cukup untuk sarapan bergizi, bersiap rapi, dan berangkat tanpa cemas terlambat.</p>
+                                    <p class="text-xs font-extrabold text-emerald-950">Tepat Waktu (s/d 05:30 WIB)</p>
+                                    <p class="text-[11px] text-emerald-800 leading-snug mt-0.5">Mengisi sebelum atau tepat pukul 05:30 WIB tercatat sebagai bangun pagi tepat waktu.</p>
                                 </div>
                             </div>
-                            <div class="flex items-start gap-3 bg-blue-50/70 p-3.5 rounded-2xl border border-blue-100">
-                                <span class="text-lg">🌱</span>
+                            <div class="flex items-start gap-3 bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100">
+                                <span class="text-lg">⏳</span>
                                 <div>
-                                    <p class="text-xs font-extrabold text-blue-950">Membangun Disiplin Diri</p>
-                                    <p class="text-[11px] text-blue-800 leading-snug mt-0.5">Kebiasaan bangun tepat waktu adalah fondasi utama karakter tangguh pemimpin masa depan.</p>
+                                    <p class="text-xs font-extrabold text-amber-950">Kesiangan (> 05:30 WIB)</p>
+                                    <p class="text-[11px] text-amber-800 leading-snug mt-0.5">Mengisi lebih dari pukul 05:30 WIB terhitung kesiangan, namun jurnal tetap dapat disimpan.</p>
                                 </div>
                             </div>
                         </div>
@@ -372,60 +386,59 @@
 </div>
 
 <script>
-    // 1. Evaluasi Waktu Bangun & Status
-    function evaluateWakeTime() {
-        const input = document.getElementById('waktu_bangun_input');
+    // 1. Inisialisasi Jam Device Pengguna & Status Waktu Otomatis
+    function initDeviceTime() {
+        const waktuInput = document.getElementById('waktu_bangun_input');
         const statusInput = document.getElementById('status_waktu_input');
+        const clockDisplay = document.getElementById('live_clock_display');
         const card = document.getElementById('status_card');
         const icon = document.getElementById('status_icon');
         const title = document.getElementById('status_title');
         const desc = document.getElementById('status_desc');
 
-        const val = input.value || '04:30';
-        const clean = val.replace(':', '');
+        // Jika sudah ada jurnal yang tersimpan sebelumnya di database hari ini, tampilkan jam itu
+        // Jika belum ada atau pengguna membuka form baru, ambil jam device sekarang
+        let timeStr = waktuInput.value;
 
-        if (clean <= '0430') {
-            statusInput.value = 'Tepat Waktu';
-            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-emerald-50 border-emerald-200';
-            icon.textContent = '🏆';
-            title.textContent = 'Tepat Waktu (Sangat Baik)';
-            title.className = 'text-xs font-black text-emerald-950 uppercase tracking-wider';
-            desc.textContent = 'Hebat! Bangun sebelum fajar/subuh memberikan energi terbaik dan ketenangan mengawali hari.';
-            desc.className = 'text-xs text-emerald-900 leading-relaxed font-medium';
-        } else if (clean <= '0530') {
-            statusInput.value = 'Cukup Baik';
-            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-blue-50 border-blue-200';
-            icon.textContent = '🌅';
-            title.textContent = 'Cukup Baik (Sebelum Terbit Fajar)';
-            title.className = 'text-xs font-black text-blue-950 uppercase tracking-wider';
-            desc.textContent = 'Bagus! Masih cukup waktu untuk beribadah dan bersiap sekolah dengan tenang tanpa tergesa.';
-            desc.className = 'text-xs text-blue-900 leading-relaxed font-medium';
-        } else if (clean <= '0630') {
-            statusInput.value = 'Lewat Sedikit';
-            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-amber-50 border-amber-200';
+        if (!timeStr) {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeStr = `${hours}:${minutes}`;
+            waktuInput.value = timeStr;
+        }
+
+        // Tampilkan di UI
+        clockDisplay.textContent = timeStr;
+
+        // Evaluasi apakah lebih dari jam 05:30 (setengah 6 pagi)
+        // Bandingkan jam:menit
+        const [h, m] = timeStr.split(':').map(Number);
+        const totalMinutes = (h * 60) + m;
+        const cutoffMinutes = (5 * 60) + 30; // 05:30 = 330 menit
+
+        if (totalMinutes > cutoffMinutes) {
+            // Lebih dari jam 05:30 -> Kesiangan
+            statusInput.value = 'Kesiangan';
+            card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-amber-50 border-amber-200';
             icon.textContent = '⏰';
-            title.textContent = 'Lewat Sedikit';
-            title.className = 'text-xs font-black text-amber-950 uppercase tracking-wider';
-            desc.textContent = 'Sedikit mepet! Usahakan tidur lebih awal malam ini agar bisa bangun lebih segar besok pagi.';
+            title.textContent = 'Kesiangan (> 05:30 WIB)';
+            title.className = 'text-xs font-black uppercase tracking-wider text-amber-950';
+            desc.textContent = `Waktu pengisian terdeteksi pukul ${timeStr} WIB (melewati batas 05:30 WIB). Terhitung kesiangan, tetapi jurnal tetap dapat disimpan secara normal.`;
             desc.className = 'text-xs text-amber-900 leading-relaxed font-medium';
         } else {
-            statusInput.value = 'Kesiangan';
-            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-rose-50 border-rose-200';
-            icon.textContent = '⚠️';
-            title.textContent = 'Kesiangan';
-            title.className = 'text-xs font-black text-rose-950 uppercase tracking-wider';
-            desc.textContent = 'Perlu perbaikan! Bangun kesiangan membuat rutinitas pagi terburu-buru. Evaluasi jam tidur malammu.';
-            desc.className = 'text-xs text-rose-900 leading-relaxed font-medium';
+            // Sebelum atau tepat 05:30 -> Tepat Waktu
+            statusInput.value = 'Tepat Waktu';
+            card.className = 'p-5 rounded-2xl border transition flex flex-col justify-between space-y-2.5 bg-emerald-50 border-emerald-200';
+            icon.textContent = '🏆';
+            title.textContent = 'Tepat Waktu (<= 05:30 WIB)';
+            title.className = 'text-xs font-black uppercase tracking-wider text-emerald-950';
+            desc.textContent = `Luar biasa! Waktu pengisian terdeteksi pukul ${timeStr} WIB (sebelum 05:30 WIB). Terus pertahankan kedisiplinan bangun pagi!`;
+            desc.className = 'text-xs text-emerald-900 leading-relaxed font-medium';
         }
     }
 
-    // 2. Preset Cepat Waktu
-    function setTimePreset(timeStr) {
-        document.getElementById('waktu_bangun_input').value = timeStr;
-        evaluateWakeTime();
-    }
-
-    // 3. Highlight Card Rutinitas yang dicentang
+    // 2. Highlight Card Rutinitas yang dicentang
     function updateRoutineUI(checkbox) {
         const card = checkbox.closest('.routine-card');
         if (checkbox.checked) {
@@ -437,7 +450,7 @@
         }
     }
 
-    // 4. Pilih Mood
+    // 3. Pilih Mood
     function selectMood(moodId, element) {
         document.getElementById('selected_mood').value = moodId;
         document.querySelectorAll('.mood-btn').forEach(btn => {
@@ -448,16 +461,16 @@
         element.classList.add('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
     }
 
-    // 5. Konfirmasi Kosongkan Jurnal
+    // 4. Konfirmasi Kosongkan Jurnal
     function confirmReset() {
         if (confirm('Apakah kamu yakin ingin mengosongkan jurnal bangun pagi hari ini? Data di dashboard dan catatan akan direset.')) {
             document.getElementById('form-reset-bangun').submit();
         }
     }
 
-    // 6. Inisialisasi saat halaman dimuat
+    // 5. Inisialisasi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', () => {
-        evaluateWakeTime();
+        initDeviceTime();
         document.querySelectorAll('.routine-card input[type="checkbox"]').forEach(cb => {
             updateRoutineUI(cb);
         });

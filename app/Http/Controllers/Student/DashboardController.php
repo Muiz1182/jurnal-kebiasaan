@@ -1257,8 +1257,8 @@ class DashboardController extends Controller
     public function updateBangunPagi(Request $request, GoogleSheetsService $sheetsService)
     {
         $request->validate([
-            'waktu_bangun' => 'required|string',
-            'status_waktu' => 'required|string|max:50',
+            'waktu_bangun' => 'nullable|string',
+            'status_waktu' => 'nullable|string|max:50',
             'mood'         => 'required|string|max:50',
             'refleksi'     => 'nullable|string|max:1000',
         ]);
@@ -1267,8 +1267,24 @@ class DashboardController extends Controller
         $today = Carbon::today()->toDateString();
         $clickTime = now();
 
-        $waktuBangun = $request->input('waktu_bangun', '04:30');
-        $statusWaktu = $request->input('status_waktu', 'Tepat Waktu');
+        $waktuBangun = $request->input('waktu_bangun') ?: now()->format('H:i');
+
+        // Evaluasi jam pengisian: jika lebih dari jam 05:30 (setengah 6 pagi) maka tercatat Kesiangan
+        $cleanTime = str_replace([':', ' ', '.'], '', $waktuBangun);
+        if (strlen($cleanTime) < 4) {
+            $cleanTime = str_pad($cleanTime, 4, '0', STR_PAD_LEFT);
+        }
+
+        if ($cleanTime > '0530') {
+            $statusWaktu = 'Kesiangan';
+        } else {
+            $statusWaktu = 'Tepat Waktu';
+        }
+
+        // Jika form mengirimkan status eksplisit Kesiangan, tetap hormati
+        if ($request->input('status_waktu') === 'Kesiangan') {
+            $statusWaktu = 'Kesiangan';
+        }
 
         $merapikanTempatTidur = $request->has('merapikan_tempat_tidur');
         $minumAirPutih        = $request->has('minum_air_putih');
