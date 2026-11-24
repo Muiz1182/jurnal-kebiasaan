@@ -9,29 +9,24 @@ class SocialActivity extends Model
 {
     use HasFactory;
 
-    /**
-     * Nama tabel yang terkait dengan model.
-     * (Opsional jika mengikuti konvensi plural Laravel, namun didefinisikan secara eksplisit untuk keamanan).
-     *
-     * @var string
-     */
     protected $table = 'social_activities';
 
-    /**
-     * Atribut yang dapat diisi secara massal (mass assignable).
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'user_id',
+        'date',
         'jenis_kegiatan',
         'deskripsi',
+        'lokasi_kegiatan',
+        'foto_kegiatan',
         'status',
+        'points',
     ];
 
-    /**
-     * Relasi ke model User (Setiap aktivitas sosial dimiliki oleh satu siswa/user).
-     */
+    protected $casts = [
+        'date'   => 'date',
+        'points' => 'integer',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

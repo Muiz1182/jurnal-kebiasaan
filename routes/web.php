@@ -147,6 +147,7 @@ Route::middleware(['auth'])->group(function () {
         // TAMBAHAN: Rute untuk Halaman & Proses Simpan Aktif Masyarakat (Sosialisasi)
         Route::get('/aktif-masyarakat', [StudentDashboardController::class, 'aktifMasyarakat'])->name('aktif-masyarakat');
         Route::post('/aktif-masyarakat', [StudentDashboardController::class, 'storeAktifMasyarakat'])->name('aktif-masyarakat.store');
+        Route::delete('/aktif-masyarakat/{id}', [StudentDashboardController::class, 'destroyAktifMasyarakat'])->name('aktif-masyarakat.destroy');
 
         // TAMBAHAN: Rute untuk Halaman & Proses Simpan Jurnal Tidur Cepat
         Route::get('/tidur-cepat', [StudentDashboardController::class, 'tidurCepat'])->name('tidur-cepat');

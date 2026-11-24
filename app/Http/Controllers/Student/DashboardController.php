@@ -899,13 +899,75 @@ class DashboardController extends Controller
     public function aktifMasyarakat()
     {
         $user = auth()->user();
+        $today = Carbon::today()->toDateString();
         
         $activities = collect();
+        $totalSocialPoints = 0;
+        $contributorLevel = 'Relawan Pemula';
+        $todayActivity = null;
+
         if (Schema::hasTable('social_activities')) {
             $activities = SocialActivity::where('user_id', $user->id)->latest()->get();
+            $todayActivity = SocialActivity::where('user_id', $user->id)->where('date', $today)->latest()->first();
+
+            $totalCount = $activities->count();
+            $totalSocialPoints = $totalCount * 30;
+
+            if ($totalCount >= 11) {
+                $contributorLevel = 'Duta Sosial Sekolah';
+            } elseif ($totalCount >= 6) {
+                $contributorLevel = 'Penggerak Kebaikan';
+            } elseif ($totalCount >= 3) {
+                $contributorLevel = 'Sahabat Warga';
+            } else {
+                $contributorLevel = 'Relawan Pemula';
+            }
         }
 
-        return view('student.aktif-masyarakat', compact('user', 'activities'));
+        // Dampak kolektif sekolah bulan ini
+        $now = Carbon::now();
+        $collectiveMonthlyCount = 0;
+        if (Schema::hasTable('social_activities')) {
+            $collectiveMonthlyCount = SocialActivity::whereMonth('date', $now->month)
+                ->whereYear('date', $now->year)
+                ->count();
+        }
+        $collectiveTarget = 100;
+        $collectiveProgress = min(round(($collectiveMonthlyCount / $collectiveTarget) * 100), 100);
+
+        // Inspirator pekan ini (Top siswa yang paling aktif melakukan aksi sosial minggu ini)
+        $startOfWeek = $now->copy()->startOfWeek(Carbon::MONDAY);
+        $endOfWeek = $now->copy()->endOfWeek(Carbon::SUNDAY);
+        $inspirators = collect();
+
+        if (Schema::hasTable('social_activities')) {
+            $inspirators = SocialActivity::with('user')
+                ->whereBetween('date', [$startOfWeek, $endOfWeek])
+                ->selectRaw('user_id, count(*) as total_actions')
+                ->groupBy('user_id')
+                ->orderByDesc('total_actions')
+                ->limit(3)
+                ->get()
+                ->map(function ($item) {
+                    $name = $item->user->name ?? 'Siswa';
+                    $words = explode(' ', trim($name));
+                    $initials = '';
+                    foreach (array_slice($words, 0, 2) as $w) {
+                        $initials .= strtoupper(substr($w, 0, 1));
+                    }
+                    return (object) [
+                        'name'          => $name,
+                        'initials'      => !empty($initials) ? $initials : 'SW',
+                        'total_actions' => $item->total_actions,
+                    ];
+                });
+        }
+
+        return view('student.aktif-masyarakat', compact(
+            'user', 'activities', 'todayActivity', 'totalSocialPoints', 
+            'contributorLevel', 'collectiveMonthlyCount', 'collectiveTarget', 
+            'collectiveProgress', 'inspirators'
+        ));
     }
 
     /**
@@ -917,41 +979,93 @@ class DashboardController extends Controller
             'jenis_kegiatan'         => 'required|string|max:255',
             'jenis_kegiatan_lainnya' => 'nullable|string|max:255',
             'deskripsi'              => 'required|string|max:1000',
+            'lokasi_kegiatan'        => 'nullable|string|max:255',
+            'foto_kegiatan'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
-        $clickTime = now();
+        $user = auth()->user();
+        $today = Carbon::today()->toDateString();
+        $clickTime = Carbon::now();
 
         $jenisKegiatan = $request->jenis_kegiatan;
         if ($jenisKegiatan === 'Lainnya' && filled($request->jenis_kegiatan_lainnya)) {
             $jenisKegiatan = $request->jenis_kegiatan_lainnya;
         }
 
-        if (Schema::hasTable('social_activities')) {
-            SocialActivity::create([
-                'user_id'        => auth()->id(),
-                'jenis_kegiatan' => $jenisKegiatan,
-                'deskripsi'      => $request->deskripsi,
-                'status'         => 'pending',
-            ]);
+        $photoPath = null;
+        if ($request->hasFile('foto_kegiatan')) {
+            $photoPath = $request->file('foto_kegiatan')->store('social_activities', 'public');
         }
 
+        // 1. Simpan ke tabel social_activities
+        SocialActivity::create([
+            'user_id'         => $user->id,
+            'date'            => $today,
+            'jenis_kegiatan'  => $jenisKegiatan,
+            'deskripsi'       => $request->deskripsi,
+            'lokasi_kegiatan' => $request->lokasi_kegiatan,
+            'foto_kegiatan'   => $photoPath,
+            'status'          => 'approved',
+            'points'          => 30,
+        ]);
+
+        // 2. Tandai checklist sosialisasi di student_journals utama
+        if (Schema::hasTable('student_journals')) {
+            StudentJournal::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'date'    => $today,
+                ],
+                [
+                    'sosialisasi'  => 1,
+                    'total_points' => 30,
+                ]
+            );
+        }
+
+        // 3. Rekap langsung ke Google Spreadsheet tab 'Aktif Masyarakat'
         try {
-            $user = auth()->user();
+            $photoInfo = !empty($photoPath) ? asset('storage/' . $photoPath) : 'Tanpa Foto';
             $rowData = [
-                $user->id,
-                $user->name ?? '-',
-                now()->toDateString(),
+                $user->name ?? 'Siswa',
+                $today,
                 $jenisKegiatan,
                 $request->deskripsi,
-                'pending',
-                $clickTime->toDateTimeString()
+                !empty($request->lokasi_kegiatan) ? $request->lokasi_kegiatan : '-',
+                $photoInfo,
+                'Divalidasi',
+                $clickTime->toDateTimeString(),
             ];
-            $sheetsService->appendRow('Aktif Masyarakat', $rowData);
+
+            // updateOrAppendRow: kolom 0 = Nama Siswa, kolom 1 = Tanggal
+            $sheetsService->updateOrAppendRow('Aktif Masyarakat', $rowData, 0, 1);
         } catch (\Exception $e) {
             \Log::error("Gagal sync ke Google Sheets (Aktif Masyarakat): " . $e->getMessage());
         }
 
-        return redirect()->route('student.aktif-masyarakat')->with('success', 'Catatan kegiatan sosial berhasil disimpan!');
+        return redirect()->route('student.aktif-masyarakat')->with('success', 'Catatan aksi sosial berhasil disimpan dan langsung ter-rekap ke Google Spreadsheet!');
+    }
+
+    /**
+     * TAMBAHAN: Menghapus data aksi sosial tertentu
+     */
+    public function destroyAktifMasyarakat($id)
+    {
+        $user = auth()->user();
+        $activity = SocialActivity::where('id', $id)->where('user_id', $user->id)->firstOrFail();
+        $activityDate = $activity->date;
+        $activity->delete();
+
+        // Cek apakah masih ada aktivitas di tanggal tersebut
+        $remainingToday = SocialActivity::where('user_id', $user->id)->where('date', $activityDate)->count();
+        if ($remainingToday === 0 && Schema::hasTable('student_journals')) {
+            $journal = StudentJournal::where('user_id', $user->id)->where('date', $activityDate)->first();
+            if ($journal) {
+                $journal->update(['sosialisasi' => 0]);
+            }
+        }
+
+        return redirect()->route('student.aktif-masyarakat')->with('success', 'Catatan kegiatan sosial berhasil dihapus.');
     }
 
     /**
