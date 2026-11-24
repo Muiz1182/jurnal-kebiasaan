@@ -8,6 +8,8 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\RegisterController; 
+use App\Http\Controllers\Auth\ForgotPasswordRequestController;
+use App\Http\Controllers\Admin\PasswordResetAdminController;
 use App\Http\Controllers\Admin\TeacherController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
@@ -38,6 +40,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register')->middleware('guest');
 Route::post('/register', [RegisterController::class, 'register'])->middleware('guest');
+
+// Rute Lupa Sandi & Verifikasi Admin 1x24 Jam
+Route::get('/forgot-password', [ForgotPasswordRequestController::class, 'showRequestForm'])->name('password.request')->middleware('guest');
+Route::post('/forgot-password', [ForgotPasswordRequestController::class, 'submitRequest'])->name('password.request.submit')->middleware('guest');
+Route::post('/forgot-password/check', [ForgotPasswordRequestController::class, 'checkStatus'])->name('password.request.check')->middleware('guest');
+Route::get('/forgot-password/status/{token}', [ForgotPasswordRequestController::class, 'showStatus'])->name('password.reset.status');
+Route::get('/reset-password/{token}', [ForgotPasswordRequestController::class, 'showResetForm'])->name('password.reset.form');
+Route::post('/reset-password/{token}', [ForgotPasswordRequestController::class, 'updatePassword'])->name('password.reset.update');
 
 // 3. Route yang memerlukan autentikasi
 Route::middleware(['auth'])->group(function () {
@@ -111,6 +121,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/teachers/{teacher}/edit', [TeacherController::class, 'edit'])->name('teachers.edit');
         Route::put('/teachers/{teacher}', [TeacherController::class, 'update'])->name('teachers.update');
         Route::delete('/teachers/{teacher}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
+
+        // Verifikasi Reset Sandi Murid
+        Route::get('/password-resets', [PasswordResetAdminController::class, 'index'])->name('password-resets.index');
+        Route::post('/password-resets/{id}/approve', [PasswordResetAdminController::class, 'approve'])->name('password-resets.approve');
+        Route::post('/password-resets/{id}/reject', [PasswordResetAdminController::class, 'reject'])->name('password-resets.reject');
     });
 
     // 5. TAMBAHAN: Rute Khusus Dashboard & Jurnal Murid
