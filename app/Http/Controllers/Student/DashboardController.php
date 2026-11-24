@@ -9,6 +9,7 @@ use App\Models\SocialActivity;
 use App\Models\JurnalTaatBeribadah;
 use App\Models\MakanSehatJournal;
 use App\Models\GemarBelajarJournal;
+use App\Models\TidurCepatJournal;
 use App\Services\GoogleSheetsService; // TAMBAHAN: Mengimport GoogleSheetsService
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
@@ -793,32 +794,111 @@ class DashboardController extends Controller
     }
 
     /**
+     * Helper menghitung durasi tidur
+     */
+    protected function calculateSleepDuration($jamTidur, $targetBangun)
+    {
+        try {
+            $tidur = Carbon::createFromFormat('H:i', $jamTidur);
+            $bangun = Carbon::createFromFormat('H:i', $targetBangun);
+
+            if ($bangun->lessThanOrEqualTo($tidur)) {
+                $bangun->addDay();
+            }
+
+            $diffMinutes = $tidur->diffInMinutes($bangun);
+            $hours = floor($diffMinutes / 60);
+            $minutes = $diffMinutes % 60;
+
+            if ($minutes > 0) {
+                return "{$hours} Jam {$minutes} Menit";
+            }
+            return "{$hours} Jam";
+        } catch (\Exception $e) {
+            return "-";
+        }
+    }
+
+    /**
      * TAMBAHAN: Menampilkan halaman Jurnal Tidur Cepat
      */
     public function tidurCepat()
     {
         $user = auth()->user();
-        $today = Carbon::today();
+        $today = Carbon::today()->toDateString();
         $journal = null;
         $routines = [];
         
         $summary = [
             'rerata_jam_tidur' => '-',
-            'total_durasi'     => '-'
+            'total_durasi'     => '-',
+            'konsistensi'      => '0%',
+            'total_sesi'       => 0,
         ];
 
-        if (Schema::hasTable('student_journals')) {
-            $journal = StudentJournal::where('user_id', $user->id)
+        if (Schema::hasTable('tidur_cepat_journals')) {
+            $journal = TidurCepatJournal::where('user_id', $user->id)
                 ->where('date', $today)
-                ->latest()
                 ->first();
 
             if ($journal && isset($journal->rutinitas_malam)) {
-                $routines = is_array($journal->rutinitas_malam) ? $journal->rutinitas_malam : json_decode($journal->rutinitas_malam, true) ?? [];
+                $routines = is_array($journal->rutinitas_malam) 
+                    ? $journal->rutinitas_malam 
+                    : json_decode($journal->rutinitas_malam, true) ?? [];
+            }
+
+            // Hitung statistik pekan ini (Senin - Minggu)
+            $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
+            $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+            $weeklyLogs = TidurCepatJournal::where('user_id', $user->id)
+                ->whereBetween('date', [$startOfWeek, $endOfWeek])
+                ->get();
+
+            if ($weeklyLogs->isNotEmpty()) {
+                $totalMinutes = 0;
+                $tepatWaktuCount = 0;
+                $jamTidurMinutes = 0;
+
+                foreach ($weeklyLogs as $log) {
+                    if (!$log->is_begadang) {
+                        $tepatWaktuCount++;
+                    }
+                    try {
+                        $t = Carbon::createFromFormat('H:i', $log->jam_tidur);
+                        $b = Carbon::createFromFormat('H:i', $log->target_bangun);
+                        if ($b->lessThanOrEqualTo($t)) {
+                            $b->addDay();
+                        }
+                        $totalMinutes += $t->diffInMinutes($b);
+
+                        // Rerata waktu tidur
+                        $jamTidurMinutes += ($t->hour * 60) + $t->minute;
+                    } catch (\Exception $e) {
+                    }
+                }
+
+                $logCount = $weeklyLogs->count();
+                $avgDurationMinutes = round($totalMinutes / $logCount);
+                $avgDurHours = floor($avgDurationMinutes / 60);
+                $avgDurMins = $avgDurationMinutes % 60;
+
+                $avgBedtimeMinutes = round($jamTidurMinutes / $logCount);
+                $avgBedHours = str_pad(floor($avgBedtimeMinutes / 60), 2, '0', STR_PAD_LEFT);
+                $avgBedMins = str_pad($avgBedtimeMinutes % 60, 2, '0', STR_PAD_LEFT);
+
+                $summary['rerata_jam_tidur'] = "{$avgBedHours}:{$avgBedMins}";
+                $summary['total_durasi'] = $avgDurMins > 0 ? "{$avgDurHours}j {$avgDurMins}m" : "{$avgDurHours} Jam";
+                $summary['konsistensi'] = round(($tepatWaktuCount / $logCount) * 100) . '%';
+                $summary['total_sesi'] = $logCount;
             }
         }
 
-        return view('student.tidur-cepat', compact('user', 'journal', 'routines', 'summary'));
+        $recentJournals = TidurCepatJournal::where('user_id', $user->id)
+            ->orderBy('date', 'desc')
+            ->limit(7)
+            ->get();
+
+        return view('student.tidur-cepat', compact('user', 'journal', 'routines', 'summary', 'recentJournals'));
     }
 
     /**
@@ -830,67 +910,131 @@ class DashboardController extends Controller
             'jam_tidur'          => 'required|string',
             'target_bangun'      => 'required|string',
             'kualitas_istirahat' => 'required|string|in:Buruk,Cukup,Nyenyak',
-            'refleksi_malam'     => 'nullable|string',
+            'refleksi_malam'     => 'nullable|string|max:1000',
             'rutinitas'          => 'nullable|array',
             'rutinitas.*'        => 'string',
         ]);
 
         $user = auth()->user();
-        $today = Carbon::today();
-        $clickTime = now();
+        $today = Carbon::today()->toDateString();
+        $clickTime = Carbon::now();
 
-        $jamTidurInput = $request->jam_tidur; 
+        $jamTidurInput = $request->jam_tidur;
+        $targetBangun = $request->target_bangun;
         $isBegadang = false;
 
         if (!empty($jamTidurInput)) {
-            if ($jamTidurInput >= '22:00' || $jamTidurInput <= '03:00') { 
+            // Standar batas tidur tepat waktu untuk siswa: maksimal pukul 22:00
+            if ($jamTidurInput >= '22:00' || $jamTidurInput <= '03:00') {
                 $isBegadang = true;
             }
         }
 
         $statusTidur = $isBegadang ? 'Begadang' : 'Tepat Waktu';
-        $rutinitasMalamJson = $request->has('rutinitas') ? json_encode($request->rutinitas) : null;
+        $durasiTidur = $this->calculateSleepDuration($jamTidurInput, $targetBangun);
+        $rutinitasArray = $request->input('rutinitas', []);
 
-        StudentJournal::create([
-            'user_id'            => $user->id,
-            'date'               => $today,
-            'tidur_cepat'        => true,
-            'jam_tidur'          => $jamTidurInput,
-            'target_bangun'      => $request->target_bangun,
-            'kualitas_istirahat' => $request->kualitas_istirahat,
-            'refleksi_malam'     => $request->refleksi_malam,
-            'rutinitas_malam'    => $rutinitasMalamJson,
-            'status_tidur'       => $statusTidur, 
-            'is_begadang'        => $isBegadang, 
-        ]);
+        // Mapping label rutinitas yang ramah dibaca
+        $rutinitasLabels = [
+            'ganti_baju'    => 'Ganti Baju Tidur',
+            'sikat_gigi'    => 'Sikat Gigi & Cuci Muka',
+            'berdoa'        => 'Berdoa Sebelum Tidur',
+            'matikan_lampu' => 'Matikan Lampu Kamar',
+            'jauhkan_hp'    => 'Jauhkan Ponsel/Gadget',
+        ];
+        $readableRoutines = [];
+        foreach ($rutinitasArray as $r) {
+            $readableRoutines[] = $rutinitasLabels[$r] ?? ucfirst(str_replace('_', ' ', $r));
+        }
+        $rutinitasString = !empty($readableRoutines) ? implode(', ', $readableRoutines) : '-';
 
+        // 1. Simpan/Update detail ke tabel tidur_cepat_journals
+        TidurCepatJournal::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'date'    => $today,
+            ],
+            [
+                'jam_tidur'          => $jamTidurInput,
+                'target_bangun'      => $targetBangun,
+                'durasi_tidur'       => $durasiTidur,
+                'kualitas_istirahat' => $request->kualitas_istirahat,
+                'status_tidur'       => $statusTidur,
+                'rutinitas_malam'    => $rutinitasArray,
+                'refleksi_malam'     => $request->refleksi_malam,
+                'is_begadang'        => $isBegadang,
+            ]
+        );
+
+        // 2. Tandai habit tidur_cepat di student_journals utama
+        if (Schema::hasTable('student_journals')) {
+            StudentJournal::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'date'    => $today,
+                ],
+                [
+                    'tidur_cepat'  => 1,
+                    'total_points' => 35,
+                ]
+            );
+        }
+
+        // 3. Rekap langsung ke Google Spreadsheet tab 'Tidur Cepat'
         try {
             $rowData = [
-                $user->id,
-                $user->name ?? '-',
-                $today->toDateString(),
+                $user->name ?? 'Siswa',
+                $today,
                 $jamTidurInput,
-                $request->target_bangun,
+                $targetBangun,
+                $durasiTidur,
                 $request->kualitas_istirahat,
                 $statusTidur,
-                $request->refleksi_malam ?? '-',
-                $clickTime->toDateTimeString()
+                $rutinitasString,
+                !empty($request->refleksi_malam) ? $request->refleksi_malam : '-',
+                $clickTime->toDateTimeString(),
             ];
-            
-            if (method_exists($sheetsService, 'updateOrAppendRow')) {
-                $sheetsService->updateOrAppendRow('Tidur Cepat', $rowData, 0, $user->id, $today->toDateString());
-            } else {
-                $sheetsService->appendRow('Tidur Cepat', $rowData);
-            }
+
+            // updateOrAppendRow: kolom 0 = Nama Siswa, kolom 1 = Tanggal
+            $sheetsService->updateOrAppendRow('Tidur Cepat', $rowData, 0, 1);
         } catch (\Exception $e) {
             \Log::error("Gagal sync ke Google Sheets (Tidur Cepat): " . $e->getMessage());
         }
 
         $pesan = $isBegadang 
-            ? 'Kebiasaan tidur disimpan. Perhatian: Anda tercatat tidur lewat dari jam 22:00 (Begadang)!' 
-            : 'Kebiasaan tidur berhasil disimpan. Kerja bagus, istirahat tepat waktu!';
+            ? 'Jurnal tidur berhasil disimpan. Catatan: Kamu tidur lewat dari jam 22:00 (Begadang), usahakan istirahat lebih awal esok hari!' 
+            : 'Jurnal tidur berhasil disimpan dan ter-rekap ke Google Spreadsheet. Kerja bagus, istirahat tepat waktu!';
 
         return redirect()->route('student.tidur-cepat')->with('success', $pesan);
+    }
+
+    /**
+     * TAMBAHAN: Mengosongkan data Jurnal Tidur Cepat hari ini
+     */
+    public function destroyTidurCepat()
+    {
+        $user = auth()->user();
+        $today = Carbon::today()->toDateString();
+
+        if (Schema::hasTable('tidur_cepat_journals')) {
+            TidurCepatJournal::where('user_id', $user->id)
+                ->where('date', $today)
+                ->delete();
+        }
+
+        if (Schema::hasTable('student_journals')) {
+            $journal = StudentJournal::where('user_id', $user->id)
+                ->where('date', $today)
+                ->first();
+
+            if ($journal) {
+                $journal->update([
+                    'tidur_cepat' => 0,
+                ]);
+            }
+        }
+
+        return redirect()->route('student.tidur-cepat')->with('success', 'Data jurnal tidur cepat hari ini berhasil dikosongkan!');
     }
 
     /**

@@ -152,6 +152,7 @@ Route::middleware(['auth'])->group(function () {
         // TAMBAHAN: Rute untuk Halaman & Proses Simpan Jurnal Tidur Cepat
         Route::get('/tidur-cepat', [StudentDashboardController::class, 'tidurCepat'])->name('tidur-cepat');
         Route::post('/tidur-cepat', [StudentDashboardController::class, 'storeTidurCepat'])->name('tidur-cepat.store');
+        Route::delete('/tidur-cepat', [StudentDashboardController::class, 'destroyTidurCepat'])->name('tidur-cepat.destroy');
 
         // Rute untuk Proses Simpan/Update Jurnal Umum
         Route::post('/journal/update', [StudentDashboardController::class, 'update'])->name('journal.update');
