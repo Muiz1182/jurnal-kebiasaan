@@ -9,7 +9,7 @@
     <!-- Alpine.js untuk Interaktif -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-gray-50 font-sans antialiased text-gray-900 min-h-screen flex flex-col" x-data="{ sidebarOpen: false, activeForm: 'form-bangun-pagi' }" x-init="activeForm = 'form-bangun-pagi'">
+<body class="bg-gray-50 font-sans antialiased text-gray-900 min-h-screen flex flex-col" x-data="{ sidebarOpen: false }">
 
     <!-- Global Toast Container (Anti-Slop System) -->
     <div x-data="toastManager()" 
@@ -92,45 +92,40 @@
                 </div>
 
                 <!-- Menu Navigasi Sesuai Design UI/UX -->
-                <nav class="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-220px)]">
+                <nav class="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-160px)]">
                     <a href="{{ route('student.dashboard') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.dashboard') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v16z"/></svg>
                         Dashboard
                     </a>
-                    <a href="{{ route('student.bangun-pagi') }}" @click="activeForm = 'form-bangun-pagi'" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.bangun-pagi') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
+                    <a href="{{ route('student.bangun-pagi') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.bangun-pagi') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <span>⏰</span> Bangun Pagi
                     </a>
-                    <a href="{{ route('student.taat-beribadah') }}" @click="activeForm = 'form-taat-beribadah'" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.taat-beribadah') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
+                    <a href="{{ route('student.taat-beribadah') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.taat-beribadah') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <span>✨</span> Taat Beribadah
                     </a>
-                    <!-- DIREVISI: Mengaktifkan rute ke halaman Rajin Olahraga -->
-                    <a href="{{ route('student.olahraga') }}" @click="activeForm = 'form-olahraga'" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.olahraga') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
+                    <a href="{{ route('student.olahraga') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.olahraga') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <span>💪</span> Rajin Olahraga
                     </a>
-                    <a href="{{ route('student.makan-sehat') }}" @click="activeForm = 'form-makan-sehat'" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.makan-sehat') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
+                    <a href="{{ route('student.makan-sehat') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.makan-sehat') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <span>🥗</span> Makan Sehat
                     </a>
-                    <a href="{{ route('student.gemar-belajar') }}" @click="activeForm = 'form-gemar-belajar'" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.gemar-belajar') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
+                    <a href="{{ route('student.gemar-belajar') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.gemar-belajar') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <span>📚</span> Gemar Belajar
                     </a>
-                    <a href="{{ route('student.aktif-masyarakat') }}" @click="activeForm = 'form-aktif-masyarakat'" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.aktif-masyarakat') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
+                    <a href="{{ route('student.aktif-masyarakat') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.aktif-masyarakat') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <span>👥</span> Aktif Masyarakat
                     </a>
-                    <a href="{{ route('student.tidur-cepat') }}" @click="activeForm = 'form-tidur-cepat'" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.tidur-cepat') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
+                    <a href="{{ route('student.tidur-cepat') }}" class="flex items-center gap-3 px-4 py-3 {{ request()->routeIs('student.tidur-cepat') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/10 font-bold' : 'text-gray-600 hover:bg-gray-50 font-medium' }} rounded-2xl text-sm transition">
                         <span>🌙</span> Tidur Cepat
                     </a>
                 </nav>
             </div>
 
-            <!-- Tombol Aksi Bawah Sidebar (Simpan Jurnal & Keluar) -->
-            <div class="p-4 border-t border-gray-50 space-y-2 bg-white">
-                <!-- DIREVISI: Tombol Simpan Jurnal Dinamis berdasarkan halaman aktif -->
-                <button type="submit" :form="activeForm" class="w-full py-3 bg-emerald-700 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-700/10 hover:bg-emerald-800 transition">
-                    Simpan Jurnal
-                </button>
+            <!-- Tombol Aksi Bawah Sidebar (Keluar) -->
+            <div class="p-4 border-t border-gray-100 bg-white">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-red-600 hover:bg-red-50 rounded-xl font-bold text-xs transition">
+                    <button type="submit" class="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl font-bold text-xs transition cursor-pointer">
                         Keluar
                     </button>
                 </form>
