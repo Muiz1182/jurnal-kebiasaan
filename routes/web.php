@@ -36,6 +36,7 @@ Route::get('/', function () {
 // 2. Rute Autentikasi
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
+Route::get('/login/forget-device', [AuthController::class, 'forgetDevice'])->name('login.forget-device');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register')->middleware('guest');

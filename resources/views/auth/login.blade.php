@@ -156,6 +156,27 @@
                     <form method="POST" action="{{ route('login') }}" class="space-y-4 pt-1">
                         @csrf
 
+                        <!-- Kartu Akun Tersimpan (Jika ada sesi sebelumnya di perangkat ini) -->
+                        @if (!empty($rememberedUser))
+                            <div class="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex items-center justify-between gap-3 text-xs">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="w-9 h-9 rounded-xl bg-blue-900 text-white font-extrabold flex items-center justify-center shrink-0 text-xs shadow-sm">
+                                        {{ strtoupper(substr($rememberedUser->name, 0, 1)) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="font-extrabold text-slate-900 truncate">{{ $rememberedUser->name }}</p>
+                                        <p class="text-[11px] text-slate-500 truncate font-semibold">
+                                            {{ $rememberedUser->username ? '@'.$rememberedUser->username : $rememberedUser->email }}
+                                            @if ($rememberedUser->kelas) &bull; Kelas {{ $rememberedUser->kelas }} @endif
+                                        </p>
+                                    </div>
+                                </div>
+                                <a href="{{ route('login.forget-device') }}" class="text-[11px] font-extrabold text-blue-900 hover:text-rose-600 hover:underline shrink-0 transition" title="Lupakan identitas di perangkat ini">
+                                    Ganti Akun
+                                </a>
+                            </div>
+                        @endif
+
                         <!-- Input Email / Username -->
                         <div class="space-y-1.5">
                             <label for="email" class="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
@@ -165,7 +186,12 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 text-sm">
                                     👤
                                 </div>
-                                <input type="text" id="email" name="email" value="{{ old('email') }}" required autofocus 
+                                <input type="text" 
+                                       id="email" 
+                                       name="email" 
+                                       value="{{ old('email', $rememberedIdentifier ?? '') }}" 
+                                       required 
+                                       {{ empty($rememberedIdentifier) ? 'autofocus' : '' }}
                                        placeholder="Masukkan email atau username"
                                        class="w-full pl-11 pr-4 py-3.5 min-h-[48px] bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white focus:border-transparent transition">
                             </div>
@@ -186,7 +212,11 @@
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 text-sm">
                                     🔒
                                 </div>
-                                <input :type="showPassword ? 'text' : 'password'" id="password" name="password" required
+                                <input :type="showPassword ? 'text' : 'password'" 
+                                       id="password" 
+                                       name="password" 
+                                       required
+                                       {{ !empty($rememberedIdentifier) ? 'autofocus' : '' }}
                                        placeholder="Masukkan kata sandi akun"
                                        class="w-full pl-11 pr-12 py-3.5 min-h-[48px] bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white focus:border-transparent transition">
                                 
@@ -202,8 +232,13 @@
 
                         <!-- Opsi Ingat Saya -->
                         <div class="flex items-center pt-1">
-                            <label class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-600 select-none">
-                                <input type="checkbox" name="remember" class="w-4 h-4 rounded-md border-slate-300 text-blue-900 focus:ring-blue-900 cursor-pointer">
+                            <label for="remember" class="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-600 select-none">
+                                <input type="checkbox" 
+                                       name="remember" 
+                                       id="remember"
+                                       value="1"
+                                       {{ old('remember') || !empty($rememberChecked) ? 'checked' : '' }}
+                                       class="w-4 h-4 rounded-md border-slate-300 text-blue-900 focus:ring-blue-900 cursor-pointer">
                                 <span>Ingat sesi saya di perangkat ini</span>
                             </label>
                         </div>

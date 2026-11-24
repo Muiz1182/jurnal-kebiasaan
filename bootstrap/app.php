@@ -11,7 +11,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Arahkan pengguna terautentikasi (termasuk sesi ingat saya) ke dashboard role masing-masing
+        $middleware->redirectTo(
+            guests: '/login',
+            users: function () {
+                $user = auth()->user();
+                if ($user?->role === 'murid') {
+                    return route('student.dashboard');
+                } elseif ($user?->role === 'admin') {
+                    return route('admin.dashboard');
+                }
+                return route('dashboard');
+            }
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Tangani kedaluwarsa sesi token CSRF (419 Page Expired) agar otomatis dialihkan kembali ke login

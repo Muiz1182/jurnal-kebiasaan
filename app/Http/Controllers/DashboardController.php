@@ -19,6 +19,13 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        // Lindungi jika role murid atau admin mengakses rute /dashboard langsung
+        if ($user->role === 'murid') {
+            return redirect()->route('student.dashboard');
+        } elseif ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
         // 1. Menentukan Sapaan Berdasarkan Jam
         $hour = now()->hour;
         if ($hour < 11) {

@@ -6,50 +6,92 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cookie;
 use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function showLogin() { return view('auth.login'); }
+    /**
+     * Tampilkan halaman login dengan mendeteksi sesi aktif atau identitas tersimpan di perangkat.
+     */
+    public function showLogin(Request $request)
+    {
+        // Jika sudah login melalui sesi aktif atau remember_token, langsung arahkan ke dashboard yang sesuai
+        if (Auth::check()) {
+            $user = Auth::user();
+            $role = strtolower(trim($user->role));
+            if ($role === 'murid') {
+                return redirect()->route('student.dashboard');
+            } elseif ($role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+            return redirect()->route('dashboard');
+        }
 
-    public function login(Request $request) {
+        $rememberedIdentifier = $request->cookie('remembered_login_identifier');
+        $rememberChecked = $request->cookie('remembered_login_remember') === '1' || !empty($rememberedIdentifier);
+
+        // Ambil data ringkas akun jika ada identitas yang pernah disimpan di perangkat ini
+        $rememberedUser = null;
+        if (!empty($rememberedIdentifier)) {
+            $rememberedUser = User::where('email', $rememberedIdentifier)
+                ->orWhere('username', $rememberedIdentifier)
+                ->orWhere('nisn', $rememberedIdentifier)
+                ->first(['name', 'username', 'email', 'kelas', 'role', 'foto_profil']);
+        }
+
+        return view('auth.login', compact('rememberedIdentifier', 'rememberChecked', 'rememberedUser'));
+    }
+
+    /**
+     * Proses autentikasi login dengan dukungan "Ingat Sesi di Perangkat Ini".
+     */
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
             'email' => ['required'], // Bisa menerima email atau username
             'password' => ['required'],
         ]);
 
-        // Coba cari user berdasarkan email ATAU username
+        // Cari user berdasarkan email atau username atau nisn
         $user = User::where('email', $request->email)
                     ->orWhere('username', $request->email)
+                    ->orWhere('nisn', $request->email)
                     ->first();
 
         if (!$user) {
             Log::info('Login Gagal: User tidak ditemukan: ' . $request->email);
-            return back()->withErrors(['email' => 'Email atau username tidak terdaftar.']);
+            return back()->withErrors(['email' => 'Email atau username tidak terdaftar.'])->withInput();
         }
 
-        // Cek password secara manual
+        // Cek kecocokan password
         if (!Hash::check($request->password, $user->password)) {
             Log::info('Login Gagal: Password tidak cocok untuk: ' . $request->email);
-            return back()->withErrors(['email' => 'Password yang Anda masukkan salah.']);
+            return back()->withErrors(['email' => 'Password yang Anda masukkan salah.'])->withInput();
         }
 
-        // Jika user ditemukan dan password cocok, lakukan login manual
-        // Menambahkan parameter '$request->has('remember')' agar fitur "remember me" berfungsi
-        $remember = $request->has('remember');
+        // Mengambil status 'remember' (boolean)
+        $remember = $request->boolean('remember');
+
+        // Login dengan remember token bawaan Laravel
         Auth::login($user, $remember);
-        
         $request->session()->regenerate();
 
-        // DIREVISI: Ubah status user menjadi aktif (1) saat berhasil login
-        if ($user) {
-            $user->is_active = 1;
-            $user->save();
+        // Tandai status user aktif
+        $user->is_active = 1;
+        $user->save();
+
+        // Kelola cookie perangkat untuk mengingat identitas akun (30 hari)
+        if ($remember) {
+            Cookie::queue('remembered_login_identifier', $request->email, 60 * 24 * 30);
+            Cookie::queue('remembered_login_remember', '1', 60 * 24 * 30);
+        } else {
+            Cookie::queue(Cookie::forget('remembered_login_identifier'));
+            Cookie::queue(Cookie::forget('remembered_login_remember'));
         }
 
-        // REVISI: Redirect langsung ke dashboard role yang sesuai agar tidak terjebak di session intended yang expired
+        // Redirect sesuai role
         $role = strtolower(trim($user->role));
-
         if ($role === 'murid') {
             return redirect()->route('student.dashboard');
         } elseif ($role === 'admin') {
@@ -59,8 +101,21 @@ class AuthController extends Controller
         return redirect()->route('dashboard');
     }
 
-    public function logout(Request $request) {
-        // DIREVISI: Ubah status user menjadi tidak aktif (0) sebelum sesi di-destroy
+    /**
+     * Hapus cookie identitas yang tersimpan di perangkat ini (Ganti Akun).
+     */
+    public function forgetDevice()
+    {
+        Cookie::queue(Cookie::forget('remembered_login_identifier'));
+        Cookie::queue(Cookie::forget('remembered_login_remember'));
+        return redirect()->route('login')->with('info', 'Identitas akun yang tersimpan di perangkat ini berhasil dihapus.');
+    }
+
+    /**
+     * Proses keluar dari sesi portal.
+     */
+    public function logout(Request $request)
+    {
         $user = Auth::user();
         if ($user) {
             $user->is_active = 0;
