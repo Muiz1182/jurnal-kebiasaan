@@ -46,7 +46,7 @@
                         </div>
                     </div>
                     <!-- Tombol Close Sidebar Khusus Mobile -->
-                    <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-gray-600 p-1 rounded-xl">
+                    <button @click="sidebarOpen = false" aria-label="Tutup Menu" class="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-400 hover:text-gray-600 p-2 rounded-xl">
                         ✕
                     </button>
                 </div>
@@ -101,15 +101,15 @@
         <main class="flex-1 flex flex-col overflow-y-auto">
             
             <!-- Navbar Atas: Profil User & Info -->
-            <header class="bg-white border-b border-gray-100 px-8 py-4 flex justify-between items-center shrink-0">
+            <header class="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-3">
                     <!-- Tombol Hamburger Menu untuk Mobile -->
-                    <button @click="sidebarOpen = true" class="lg:hidden p-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200">
+                    <button @click="sidebarOpen = true" aria-label="Buka Menu Navigasi" class="lg:hidden min-h-[44px] min-w-[44px] flex items-center justify-center p-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
                         ☰
                     </button>
-                    <div class="lg:hidden flex items-center gap-3">
-                        <img src="{{ asset('images/LOGO SMP 9 TRANS.png') }}" alt="Logo" class="w-8 h-8 rounded-xl object-cover shadow-sm border border-gray-100">
-                        <span class="font-extrabold text-gray-900 text-sm">SMPN 9 Probolinggo</span>
+                    <div class="lg:hidden flex items-center gap-2.5">
+                        <img src="{{ asset('images/LOGO SMP 9 TRANS.png') }}" alt="Logo" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl object-cover shadow-sm border border-gray-100">
+                        <span class="font-extrabold text-gray-900 text-xs sm:text-sm">SMPN 9 Probolinggo</span>
                     </div>
                 </div>
                 <div class="hidden lg:block">
