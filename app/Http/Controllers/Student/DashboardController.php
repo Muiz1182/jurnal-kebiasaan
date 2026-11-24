@@ -10,6 +10,7 @@ use App\Models\JurnalTaatBeribadah;
 use App\Models\MakanSehatJournal;
 use App\Models\GemarBelajarJournal;
 use App\Models\TidurCepatJournal;
+use App\Models\BangunPagiJournal;
 use App\Services\GoogleSheetsService; // TAMBAHAN: Mengimport GoogleSheetsService
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
@@ -107,17 +108,55 @@ class DashboardController extends Controller
     public function bangunPagi()
     {
         $user = auth()->user();
-        $today = Carbon::today();
+        $today = Carbon::today()->toDateString();
         $journal = null;
 
-        if (Schema::hasTable('student_journals')) {
-            $journal = StudentJournal::where('user_id', $user->id)
+        if (Schema::hasTable('bangun_pagi_journals')) {
+            $journal = BangunPagiJournal::where('user_id', $user->id)
                 ->where('date', $today)
-                ->latest()
                 ->first();
         }
 
-        return view('student.bangun-pagi', compact('user', 'journal'));
+        // Weekly Streak & Data (Senin - Minggu)
+        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
+        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->toDateString();
+        $weeklyJournals = collect();
+
+        if (Schema::hasTable('bangun_pagi_journals')) {
+            $weeklyJournals = BangunPagiJournal::where('user_id', $user->id)
+                ->whereBetween('date', [$startOfWeek, $endOfWeek])
+                ->get();
+        }
+
+        $totalDaysActive = $weeklyJournals->count();
+        $tepatWaktuCount = $weeklyJournals->filter(function($j) {
+            return str_contains(strtolower($j->status_waktu), 'tepat');
+        })->count();
+
+        // Mapped days 1..7 (Senin..Minggu)
+        $mappedWeekly = $weeklyJournals->keyBy(function($item) {
+            return Carbon::parse($item->date)->format('N');
+        });
+
+        $weeklyChartData = [];
+        for ($i = 1; $i <= 7; $i++) {
+            $weeklyChartData[$i] = [
+                'active' => isset($mappedWeekly[$i]),
+                'data'   => $mappedWeekly[$i] ?? null,
+            ];
+        }
+
+        // Waktu bangun awal: gunakan data tersimpan atau default 04:30
+        $defaultTime = ($journal && !empty($journal->waktu_bangun)) ? $journal->waktu_bangun : '04:30';
+
+        return view('student.bangun-pagi', compact(
+            'user',
+            'journal',
+            'totalDaysActive',
+            'tepatWaktuCount',
+            'weeklyChartData',
+            'defaultTime'
+        ));
     }
 
     /**
@@ -1213,44 +1252,118 @@ class DashboardController extends Controller
     }
 
     /**
-     * Menyimpan/memperbarui status checklist jurnal harian siswa (Bangun Pagi)
+     * Menyimpan/memperbarui status jurnal harian siswa (Bangun Pagi)
      */
     public function updateBangunPagi(Request $request, GoogleSheetsService $sheetsService)
     {
-        $response = $this->processUpdate($request, 'bangun_pagi', 'Form bangun pagi berhasil diperbarui!', route('student.bangun-pagi'), null);
+        $request->validate([
+            'waktu_bangun' => 'required|string',
+            'status_waktu' => 'required|string|max:50',
+            'mood'         => 'required|string|max:50',
+            'refleksi'     => 'nullable|string|max:1000',
+        ]);
 
-        if ($sheetsService) {
-            try {
-                $user = auth()->user();
-                $today = Carbon::today();
-                $clickTime = now();
+        $user = auth()->user();
+        $today = Carbon::today()->toDateString();
+        $clickTime = now();
 
-                $rowData = [
-                    $user->id,
-                    $user->name ?? '-',
-                    $today->toDateString(),
-                    $request->input('waktu_bangun', '-'),
-                    $request->input('status_waktu', '-'),
-                    $request->has('merapikan_tempat_tidur') ? 'Ya' : 'Tidak',
-                    $request->has('minum_air_putih') ? 'Ya' : 'Tidak',
-                    $request->has('mandi_pagi') ? 'Ya' : 'Tidak',
-                    $request->has('persiapan_sekolah') ? 'Ya' : 'Tidak',
-                    $request->input('mood', '-'),
-                    $request->input('refleksi', '-'),
-                    $clickTime->toDateTimeString()
-                ];
-                
-                if (method_exists($sheetsService, 'updateOrAppendRow')) {
-                    $sheetsService->updateOrAppendRow('Bangun Pagi', $rowData, 0, $user->id, $today->toDateString());
-                } else {
-                    $sheetsService->appendRow('Bangun Pagi', $rowData);
-                }
-            } catch (\Exception $e) {
-                \Log::error("Gagal sync ke Google Sheets (Bangun Pagi): " . $e->getMessage());
+        $waktuBangun = $request->input('waktu_bangun', '04:30');
+        $statusWaktu = $request->input('status_waktu', 'Tepat Waktu');
+
+        $merapikanTempatTidur = $request->has('merapikan_tempat_tidur');
+        $minumAirPutih        = $request->has('minum_air_putih');
+        $mandiPagi            = $request->has('mandi_pagi');
+        $persiapanSekolah     = $request->has('persiapan_sekolah');
+        $mood                 = $request->input('mood', 'BERENERGI');
+        $refleksi             = $request->input('refleksi');
+
+        // 1. Simpan/update detail ke tabel bangun_pagi_journals
+        if (Schema::hasTable('bangun_pagi_journals')) {
+            BangunPagiJournal::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'date'    => $today,
+                ],
+                [
+                    'waktu_bangun'           => $waktuBangun,
+                    'status_waktu'           => $statusWaktu,
+                    'merapikan_tempat_tidur' => $merapikanTempatTidur,
+                    'minum_air_putih'        => $minumAirPutih,
+                    'mandi_pagi'             => $mandiPagi,
+                    'persiapan_sekolah'      => $persiapanSekolah,
+                    'mood'                   => $mood,
+                    'refleksi'               => $refleksi,
+                ]
+            );
+        }
+
+        // 2. Tandai habit bangun_pagi = 1 di student_journals utama
+        if (Schema::hasTable('student_journals')) {
+            StudentJournal::updateOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'date'    => $today,
+                ],
+                [
+                    'bangun_pagi'  => 1,
+                    'total_points' => 15,
+                ]
+            );
+        }
+
+        // 3. Rekap langsung ke Google Spreadsheet tab 'Bangun Pagi'
+        try {
+            $rowData = [
+                $user->name ?? 'Siswa',
+                $today,
+                $waktuBangun . ' WIB',
+                $statusWaktu,
+                $merapikanTempatTidur ? 'Ya' : 'Tidak',
+                $minumAirPutih ? 'Ya' : 'Tidak',
+                $mandiPagi ? 'Ya' : 'Tidak',
+                $persiapanSekolah ? 'Ya' : 'Tidak',
+                $mood,
+                !empty($refleksi) ? $refleksi : '-',
+                $clickTime->toDateTimeString(),
+            ];
+
+            // updateOrAppendRow: kolom 0 = Nama Siswa, kolom 1 = Tanggal
+            $sheetsService->updateOrAppendRow('Bangun Pagi', $rowData, 0, 1);
+        } catch (\Exception $e) {
+            \Log::error("Gagal sync ke Google Sheets (Bangun Pagi): " . $e->getMessage());
+        }
+
+        return redirect()->route('student.bangun-pagi')
+            ->with('success', 'Jurnal bangun pagi berhasil disimpan dan langsung ter-rekap ke Google Spreadsheet!');
+    }
+
+    /**
+     * Mengosongkan data jurnal bangun pagi hari ini
+     */
+    public function destroyBangunPagi()
+    {
+        $user = auth()->user();
+        $today = Carbon::today()->toDateString();
+
+        if (Schema::hasTable('bangun_pagi_journals')) {
+            BangunPagiJournal::where('user_id', $user->id)
+                ->where('date', $today)
+                ->delete();
+        }
+
+        if (Schema::hasTable('student_journals')) {
+            $studentJournal = StudentJournal::where('user_id', $user->id)
+                ->where('date', $today)
+                ->first();
+
+            if ($studentJournal) {
+                $studentJournal->bangun_pagi = 0;
+                $studentJournal->save();
             }
         }
 
-        return $response;
+        return redirect()->route('student.bangun-pagi')
+            ->with('success', 'Jurnal bangun pagi hari ini berhasil dikosongkan.');
     }
 
     /**

@@ -1,210 +1,466 @@
 @extends('layouts.student')
 
-@section('title', 'Bangun Pagi')
+@section('title', 'Bangun Pagi - Jurnal Harian 7 Kebiasaan Anak Indonesia')
 
 @section('content')
-@php
-    // Waktu otomatis terkunci format 24 Jam saat halaman dibuka
-    $waktuSekarang = $journal->waktu_bangun ?? \Carbon\Carbon::now()->format('H:i');
-    
-    // Logika otomatis status waktu berdasarkan format 24 jam
-    if (isset($journal->status_waktu)) {
-        $statusOtomatis = $journal->status_waktu;
-    } else {
-        $jamMenit = str_replace(':', '', $waktuSekarang);
-        if ($jamMenit <= '0400') {
-            $statusOtomatis = 'Tepat Waktu';
-        } elseif ($jamMenit <= '0600') {
-            $statusOtomatis = 'Lewat Sedikit';
-        } else {
-            $statusOtomatis = 'Kesiangan';
-        }
-    }
-@endphp
+<div class="flex min-h-screen bg-slate-50 w-full">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-7xl mx-auto">
 
-<!-- Form utama untuk menyimpan data jurnal Bangun Pagi -->
-<form id="form-bangun-pagi" action="{{ route('student.bangun-pagi.update') }}" method="POST" class="flex flex-col min-h-screen bg-gray-50 w-full"
-      x-data="{ 
-          selectedMood: '{{ $journal->mood ?? 'BERENERGI' }}'
-      }">
-    @csrf
-
-    <!-- KONTEN UTAMA HALAMAN -->
-    <main class="flex-1 p-8 space-y-6 overflow-y-auto">
-        
-        <!-- HEADER BANNER -->
-        <div class="relative bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 overflow-hidden">
-            <!-- Efek Background Dekoratif -->
-            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
-            
-            <div class="space-y-2 relative z-10">
-                <span class="inline-block px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold tracking-wider uppercase border border-white/10">
-                    Kebiasaan 1
-                </span>
-                <h1 class="text-3xl font-extrabold tracking-tight">Bangun Pagi</h1>
-                <p class="text-blue-200 text-sm italic font-medium">
-                    "Awal hari yang disiplin adalah kunci kesuksesan seorang pelajar hebat."
-                </p>
+        <!-- Notifikasi Flash Message -->
+        @if(session('success'))
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-5 py-4 rounded-2xl shadow-sm text-sm font-semibold flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-xl">✅</span>
+                    <span>{{ session('success') }}</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-950 font-bold text-lg leading-none">&times;</button>
             </div>
+        @endif
 
-            <!-- Widget Tanggal Hari Ini -->
-            <div class="relative z-10 bg-white/10 backdrop-blur-md border border-white/15 px-5 py-3 rounded-2xl flex items-center gap-3 shadow-inner">
-                <div class="p-2.5 bg-white/10 rounded-xl">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
+        @if($errors->any())
+            <div class="bg-rose-50 border border-rose-200 text-rose-900 px-5 py-4 rounded-2xl shadow-sm text-sm font-semibold space-y-1">
+                <div class="flex items-center gap-2 text-rose-700 font-bold">
+                    <span>⚠️</span> Mohon periksa isian formulir:
                 </div>
-                <div>
-                    <p class="text-[10px] uppercase tracking-widest text-blue-200 font-bold">Hari Ini</p>
-                    <p class="text-sm font-extrabold text-white">{{ \Carbon\Carbon::now()->format('l, d M') }}</p>
-                </div>
+                <ul class="list-disc list-inside text-xs text-rose-800 space-y-0.5">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
             </div>
-        </div>
+        @endif
 
-        <!-- GRID KONTROL UTAMA -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            <!-- KARTU 1: WAKTU BANGUN -->
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-xl shadow-inner border border-pink-100">
-                            ⏰
-                        </div>
-                        <div>
-                            <h2 class="font-extrabold text-gray-900 text-base">Waktu Bangun</h2>
-                            <p class="text-xs text-gray-400 font-medium">Terkunci otomatis saat halaman dibuka</p>
-                        </div>
-                    </div>
-
-                    <!-- Waktu otomatis terkunci format 24 jam -->
-                    <div class="relative mb-2">
-                        <input type="hidden" name="waktu_bangun" value="{{ $waktuSekarang }}">
-                        
-                        <div class="w-full bg-gray-100 border border-gray-200 rounded-2xl px-5 py-4 text-2xl font-black text-gray-700 tracking-wider flex items-center justify-between select-none cursor-not-allowed">
-                            <span>{{ \Carbon\Carbon::parse($waktuSekarang)->format('H:i') }} WIB</span>
-                            <span class="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-bold uppercase tracking-wider">Locked</span>
-                        </div>
-                    </div>
-                    <p class="text-[11px] text-gray-400 font-medium mb-4">*Catatan: Jam format 24 jam dan status waktu terisi otomatis secara permanen.</p>
-                </div>
-
-                <!-- Tampilan Status Waktu Terkunci (Locked / Tidak Bisa Dipilih) -->
-                <div>
-                    <input type="hidden" name="status_waktu" value="{{ $statusOtomatis }}">
-                    
-                    <div class="w-full p-4 rounded-2xl border text-center transition flex items-center justify-between shadow-sm select-none cursor-not-allowed
-                        @if($statusOtomatis === 'Tepat Waktu') bg-blue-50 border-blue-200 text-blue-900
-                        @elseif($statusOtomatis === 'Lewat Sedikit') bg-amber-50 border-amber-200 text-amber-900
-                        @else bg-red-50 border-red-200 text-red-950 @endif">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm">📌</span>
-                            <span class="text-xs font-bold uppercase tracking-wider">Status Waktu Otomatis:</span>
-                        </div>
-                        <span class="text-xs font-black px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-sm
-                            @if($statusOtomatis === 'Tepat Waktu') bg-blue-900 text-white
-                            @elseif($statusOtomatis === 'Lewat Sedikit') bg-amber-600 text-white
-                            @else bg-red-600 text-white @endif">
-                            {{ $statusOtomatis }}
+        <!-- HEADER BANNER NAVY MODERN (ANTISLOP) -->
+        <div class="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden border border-slate-800">
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="px-3 py-1 bg-amber-400/20 text-amber-300 text-[11px] font-extrabold rounded-full uppercase tracking-wider border border-amber-400/30">
+                            KEBIASAAN 1
                         </span>
+                        @if($journal)
+                            <span class="px-3 py-1 bg-emerald-500 text-slate-950 text-[11px] font-extrabold rounded-full uppercase tracking-wider shadow-sm">
+                                Terisi: {{ $journal->status_waktu }} ({{ $journal->waktu_bangun }} WIB)
+                            </span>
+                        @else
+                            <span class="px-3 py-1 bg-slate-800 text-slate-300 text-[11px] font-extrabold rounded-full uppercase tracking-wider border border-slate-700">
+                                Belum Mengisi Hari Ini
+                            </span>
+                        @endif
                     </div>
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
+                        Bangun Pagi
+                    </h1>
+                    <p class="text-slate-300 text-xs sm:text-sm font-medium leading-relaxed">
+                        Awal hari yang teratur dan disiplin membuka energi positif, kejernihan berpikir, serta kesiapan optimal untuk belajar di sekolah.
+                    </p>
+                </div>
+
+                <!-- Indikator Tanggal & Tombol Aksi -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="bg-slate-800/90 border border-slate-700 px-4 py-3 rounded-2xl flex items-center gap-3">
+                        <span class="text-xl">📅</span>
+                        <div>
+                            <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">TANGGAL HARI INI</p>
+                            <p class="text-xs sm:text-sm font-extrabold text-white">
+                                {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
+                            </p>
+                        </div>
+                    </div>
+
+                    @if($journal)
+                        <button type="button" onclick="confirmReset()" class="bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 font-bold px-4 py-3 rounded-2xl transition text-xs flex items-center gap-2 cursor-pointer">
+                            <span>🗑️</span> Kosongkan
+                        </button>
+                    @endif
+
+                    <button type="button" onclick="document.getElementById('form-bangun-pagi').submit()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition text-xs sm:text-sm cursor-pointer">
+                        <span>💾</span> Simpan Jurnal
+                    </button>
                 </div>
             </div>
-
-            <!-- KARTU 2: RUTINITAS PAGI -->
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-inner border border-amber-100">
-                        ✨
-                    </div>
-                    <div>
-                        <h2 class="font-extrabold text-gray-900 text-base">Rutinitas Pagi</h2>
-                        <p class="text-xs text-gray-400 font-medium">Centang kegiatan yang sudah kamu lakukan</p>
-                    </div>
-                </div>
-
-                <!-- Daftar Checkbox Rutinitas -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 my-auto">
-                    <label class="flex items-center gap-3.5 p-3.5 rounded-2xl border border-gray-200 bg-gray-50 hover:bg-gray-100/80 cursor-pointer transition">
-                        <input type="checkbox" name="merapikan_tempat_tidur" value="1" {{ optional($journal)->merapikan_tempat_tidur ? 'checked' : '' }}
-                               class="w-5 h-5 rounded-lg text-blue-900 border-gray-300 focus:ring-blue-900">
-                        <span class="text-xs font-bold text-gray-700">Merapikan Tempat Tidur</span>
-                    </label>
-
-                    <label class="flex items-center gap-3.5 p-3.5 rounded-2xl border border-gray-200 bg-gray-50 hover:bg-gray-100/80 cursor-pointer transition">
-                        <input type="checkbox" name="minum_air_putih" value="1" {{ optional($journal)->minum_air_putih ? 'checked' : '' }}
-                               class="w-5 h-5 rounded-lg text-blue-900 border-gray-300 focus:ring-blue-900">
-                        <span class="text-xs font-bold text-gray-700">Minum Air Putih</span>
-                    </label>
-
-                    <label class="flex items-center gap-3.5 p-3.5 rounded-2xl border border-gray-200 bg-gray-50 hover:bg-gray-100/80 cursor-pointer transition">
-                        <input type="checkbox" name="mandi_pagi" value="1" {{ optional($journal)->mandi_pagi ? 'checked' : '' }}
-                               class="w-5 h-5 rounded-lg text-blue-900 border-gray-300 focus:ring-blue-900">
-                        <span class="text-xs font-bold text-gray-700">Mandi Pagi</span>
-                    </label>
-
-                    <label class="flex items-center gap-3.5 p-3.5 rounded-2xl border border-gray-200 bg-gray-50 hover:bg-gray-100/80 cursor-pointer transition">
-                        <input type="checkbox" name="persiapan_sekolah" value="1" {{ optional($journal)->persiapan_sekolah ? 'checked' : '' }}
-                               class="w-5 h-5 rounded-lg text-blue-900 border-gray-300 focus:ring-blue-900">
-                        <span class="text-xs font-bold text-gray-700">Persiapan Sekolah</span>
-                    </label>
-                </div>
-            </div>
-
         </div>
 
-        <!-- GRID BAGIAN BAWAH: MOOD & REFLEKSI -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- KARTU 3: MOOD PAGI INI -->
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between">
-                <div>
-                    <h2 class="font-extrabold text-gray-900 text-sm mb-1">Mood Pagi Ini</h2>
-                    <p class="text-xs text-gray-400 font-medium mb-4">Bagaimana perasaanmu saat mengawali hari?</p>
+        <!-- FORM UTAMA -->
+        <form id="form-bangun-pagi" action="{{ route('student.bangun-pagi.update') }}" method="POST">
+            @csrf
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- KOLOM KIRI & TENGAH (FORMULIR INPUT) -->
+                <div class="lg:col-span-2 space-y-6">
+
+                    <!-- 1. WAKTU BANGUN & EVALUASI OTOMATIS -->
+                    <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                1. Waktu Bangun Pagi
+                            </h3>
+                            <p class="text-xs text-slate-500">Pilih jam bangunmu pagi ini. Sistem akan mengevaluasi ketepatan waktu secara otomatis.</p>
+                        </div>
+
+                        <input type="hidden" name="status_waktu" id="status_waktu_input" value="{{ old('status_waktu', optional($journal)->status_waktu ?? 'Tepat Waktu') }}">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div class="space-y-3">
+                                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
+                                    <input type="time" name="waktu_bangun" id="waktu_bangun_input"
+                                        value="{{ old('waktu_bangun', $defaultTime) }}" required
+                                        onchange="evaluateWakeTime()"
+                                        class="bg-transparent text-2xl sm:text-3xl font-black text-slate-900 focus:outline-none cursor-pointer">
+                                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">WIB</span>
+                                </div>
+
+                                <!-- Preset Cepat -->
+                                <div class="grid grid-cols-4 gap-2">
+                                    @foreach(['04:00', '04:30', '05:00', '05:30'] as $preset)
+                                        <button type="button" onclick="setTimePreset('{{ $preset }}')" class="py-2.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold rounded-xl transition cursor-pointer shadow-2xs text-center">
+                                            {{ $preset }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Live Card Evaluasi Ketepatan Waktu -->
+                            <div id="status_card" class="p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-emerald-50 border-emerald-200">
+                                <div class="flex items-center gap-2">
+                                    <span id="status_icon" class="text-xl">🏆</span>
+                                    <p id="status_title" class="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                                        Tepat Waktu (Sangat Baik)
+                                    </p>
+                                </div>
+                                <p id="status_desc" class="text-xs text-emerald-900 leading-relaxed font-medium">
+                                    Hebat! Bangun sebelum fajar memberikan energi terbaik dan ketenangan mengawali hari.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. RUTINITAS PAGI POSITIF (CHECKLIST) -->
+                    <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                2. Rutinitas Pagi Positif
+                            </h3>
+                            <p class="text-xs text-slate-500">Centang kegiatan positif yang sudah kamu lakukan setelah bangun pagi</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <!-- 1. Merapikan Tempat Tidur -->
+                            <label class="routine-card p-4 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white cursor-pointer transition flex items-start gap-3.5">
+                                <input type="checkbox" name="merapikan_tempat_tidur" value="1"
+                                    {{ old('merapikan_tempat_tidur', optional($journal)->merapikan_tempat_tidur) ? 'checked' : '' }}
+                                    onchange="updateRoutineUI(this)"
+                                    class="w-5 h-5 rounded-lg text-emerald-600 border-slate-300 focus:ring-emerald-500 mt-0.5">
+                                <div class="space-y-0.5">
+                                    <p class="text-xs sm:text-sm font-extrabold text-slate-900">Merapikan Tempat Tidur</p>
+                                    <p class="text-[11px] text-slate-500 leading-snug">Menata kasur dan bantal melatih kedisiplinan sejak awal hari.</p>
+                                </div>
+                            </label>
+
+                            <!-- 2. Minum Air Putih -->
+                            <label class="routine-card p-4 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white cursor-pointer transition flex items-start gap-3.5">
+                                <input type="checkbox" name="minum_air_putih" value="1"
+                                    {{ old('minum_air_putih', optional($journal)->minum_air_putih) ? 'checked' : '' }}
+                                    onchange="updateRoutineUI(this)"
+                                    class="w-5 h-5 rounded-lg text-emerald-600 border-slate-300 focus:ring-emerald-500 mt-0.5">
+                                <div class="space-y-0.5">
+                                    <p class="text-xs sm:text-sm font-extrabold text-slate-900">Minum Segelas Air Putih</p>
+                                    <p class="text-[11px] text-slate-500 leading-snug">Mengaktifkan metabolisme organ dan mengganti cairan semalaman.</p>
+                                </div>
+                            </label>
+
+                            <!-- 3. Mandi Pagi -->
+                            <label class="routine-card p-4 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white cursor-pointer transition flex items-start gap-3.5">
+                                <input type="checkbox" name="mandi_pagi" value="1"
+                                    {{ old('mandi_pagi', optional($journal)->mandi_pagi) ? 'checked' : '' }}
+                                    onchange="updateRoutineUI(this)"
+                                    class="w-5 h-5 rounded-lg text-emerald-600 border-slate-300 focus:ring-emerald-500 mt-0.5">
+                                <div class="space-y-0.5">
+                                    <p class="text-xs sm:text-sm font-extrabold text-slate-900">Mandi Pagi & Bersuci</p>
+                                    <p class="text-[11px] text-slate-500 leading-snug">Menyegarkan tubuh, melancarkan peredaran darah, dan higienis.</p>
+                                </div>
+                            </label>
+
+                            <!-- 4. Persiapan Sekolah -->
+                            <label class="routine-card p-4 rounded-2xl border border-slate-200 hover:border-slate-300 bg-white cursor-pointer transition flex items-start gap-3.5">
+                                <input type="checkbox" name="persiapan_sekolah" value="1"
+                                    {{ old('persiapan_sekolah', optional($journal)->persiapan_sekolah) ? 'checked' : '' }}
+                                    onchange="updateRoutineUI(this)"
+                                    class="w-5 h-5 rounded-lg text-emerald-600 border-slate-300 focus:ring-emerald-500 mt-0.5">
+                                <div class="space-y-0.5">
+                                    <p class="text-xs sm:text-sm font-extrabold text-slate-900">Persiapan Peralatan Sekolah</p>
+                                    <p class="text-[11px] text-slate-500 leading-snug">Mengecek seragam rapi, buku pelajaran, dan perlengkapan tas.</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 3. MOOD PAGI & REFLEKSI -->
+                    <div class="bg-white p-6 sm:p-7 rounded-3xl border border-slate-200 shadow-sm space-y-5">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h3 class="text-base sm:text-lg font-black text-slate-900">
+                                3. Mood Pagi Ini & Refleksi Singkat
+                            </h3>
+                            <p class="text-xs text-slate-500">Pilih perasaanmu saat menyambut hari baru dan tuliskan afirmasi positif</p>
+                        </div>
+
+                        <input type="hidden" name="mood" id="selected_mood" value="{{ old('mood', optional($journal)->mood ?? 'BERENERGI') }}" required>
+
+                        @php
+                            $savedMood = old('mood', optional($journal)->mood ?? 'BERENERGI');
+                            $moodList = [
+                                ['id' => 'BERENERGI', 'name' => 'Berenergi', 'emoji' => '⚡'],
+                                ['id' => 'SENANG', 'name' => 'Senang', 'emoji' => '😊'],
+                                ['id' => 'TENANG', 'name' => 'Tenang', 'emoji' => '🌿'],
+                                ['id' => 'SEMANGAT', 'name' => 'Semangat', 'emoji' => '🔥'],
+                                ['id' => 'MENGANTUK', 'name' => 'Mengantuk', 'emoji' => '😴'],
+                            ];
+                        @endphp
+
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                            @foreach($moodList as $m)
+                                @php $isMoodSelected = ($savedMood === $m['id']); @endphp
+                                <button type="button"
+                                    onclick="selectMood('{{ $m['id'] }}', this)"
+                                    class="mood-btn p-3 rounded-2xl border text-center flex flex-col items-center justify-center gap-1.5 transition cursor-pointer {{ $isMoodSelected ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-bold shadow-sm ring-1 ring-emerald-500' : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white font-medium hover:bg-slate-50' }}">
+                                    <span class="text-2xl">{{ $m['emoji'] }}</span>
+                                    <span class="text-xs text-center leading-tight">{{ $m['name'] }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+
+                        <div class="space-y-2 pt-2">
+                            <label class="block text-xs font-bold text-slate-800">
+                                Refleksi & Niat Positif Hari Ini:
+                            </label>
+                            <textarea name="refleksi" rows="3"
+                                class="w-full rounded-2xl border border-slate-300 p-4 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-slate-50/50"
+                                placeholder="Contoh: Hari ini saya bangun lebih segar, siap mengikuti pelajaran matematika dengan antusias dan ingin berbuat baik kepada sesama...">{{ old('refleksi', optional($journal)->refleksi) }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Simpan Bawah -->
+                    <div class="flex items-center justify-end gap-3 pt-2">
+                        <button type="submit" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-8 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition text-sm cursor-pointer">
+                            <span>💾</span> Simpan Jurnal Bangun Pagi
+                        </button>
+                    </div>
+
                 </div>
 
-                <input type="hidden" name="mood" x-model="selectedMood">
-                <div class="grid grid-cols-3 gap-3">
-                    <!-- Berenergi -->
-                    <button type="button" @click="selectedMood = 'BERENERGI'"
-                            :class="selectedMood === 'BERENERGI' ? 'border-amber-400 bg-amber-50/60 shadow-md ring-2 ring-amber-400/20' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'"
-                            class="flex flex-col items-center justify-center p-3 rounded-2xl border transition group">
-                        <span class="text-2xl mb-1 group-hover:scale-110 transition">⚡</span>
-                        <span class="text-[10px] font-extrabold text-gray-700 uppercase tracking-tight">Berenergi</span>
-                    </button>
+                <!-- KOLOM KANAN (SIDEBAR & REKAP MINGGUAN) -->
+                <div class="space-y-6">
 
-                    <!-- Senang -->
-                    <button type="button" @click="selectedMood = 'SENANG'"
-                            :class="selectedMood === 'SENANG' ? 'border-emerald-400 bg-emerald-50/60 shadow-md ring-2 ring-emerald-400/20' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'"
-                            class="flex flex-col items-center justify-center p-3 rounded-2xl border transition group">
-                        <span class="text-2xl mb-1 group-hover:scale-110 transition">😊</span>
-                        <span class="text-[10px] font-extrabold text-gray-700 uppercase tracking-tight">Senang</span>
-                    </button>
+                    <!-- KARTU WEEKLY STREAK -->
+                    <div class="bg-slate-900 text-white p-6 rounded-3xl shadow-xl space-y-5 border border-slate-800">
+                        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-amber-400">
+                                WEEKLY STREAK
+                            </span>
+                            <span class="text-xs text-slate-400 font-semibold">Minggu Ini</span>
+                        </div>
 
-                    <!-- Mengantuk -->
-                    <button type="button" @click="selectedMood = 'MENGANTUK'"
-                            :class="selectedMood === 'MENGANTUK' ? 'border-blue-400 bg-blue-50/60 shadow-md ring-2 ring-blue-400/20' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'"
-                            class="flex flex-col items-center justify-center p-3 rounded-2xl border transition group">
-                        <span class="text-2xl mb-1 group-hover:scale-110 transition">😴</span>
-                        <span class="text-[10px] font-extrabold text-gray-700 uppercase tracking-tight">Mengantuk</span>
-                    </button>
+                        <div>
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-4xl font-black text-white">{{ $totalDaysActive ?? 0 }}</span>
+                                <span class="text-sm font-bold text-slate-300">Hari Disiplin</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Bangun pagi konsisten membentuk ritme biologis tubuh yang prima.</p>
+                        </div>
+
+                        <!-- 7 Hari (Senin s/d Minggu) -->
+                        <div class="grid grid-cols-7 gap-1 pt-1">
+                            @php
+                                $daysLabel = [
+                                    1 => 'Sen',
+                                    2 => 'Sel',
+                                    3 => 'Rab',
+                                    4 => 'Kam',
+                                    5 => 'Jum',
+                                    6 => 'Sab',
+                                    7 => 'Min',
+                                ];
+                                $todayNum = \Carbon\Carbon::today()->format('N');
+                            @endphp
+
+                            @foreach($daysLabel as $dayIdx => $dayName)
+                                @php
+                                    $isCompleted = isset($weeklyChartData[$dayIdx]) && $weeklyChartData[$dayIdx]['active'];
+                                    $isToday = ($todayNum == $dayIdx);
+                                @endphp
+                                <div class="flex flex-col items-center gap-1.5">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition
+                                        {{ $isCompleted
+                                            ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20'
+                                            : ($isToday
+                                                ? 'bg-slate-800 border-2 border-amber-400 text-white'
+                                                : 'bg-slate-800 text-slate-500') }}">
+                                        {{ $isCompleted ? '✓' : '' }}
+                                    </div>
+                                    <span class="text-[10px] font-bold {{ $isToday ? 'text-amber-400' : 'text-slate-400' }}">
+                                        {{ $dayName }}
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- RINGKASAN STATISTIK MINGGUAN -->
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="text-sm font-black text-slate-900 border-b border-slate-100 pb-3 uppercase tracking-wider">
+                            Statistik Kedisiplinan Pagi
+                        </h4>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Hari Terisi</p>
+                                <p class="text-xl font-black text-slate-900 mt-1">{{ $totalDaysActive ?? 0 }} <span class="text-xs font-semibold text-slate-500">Hari</span></p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tepat Waktu</p>
+                                <p class="text-xl font-black text-emerald-600 mt-1">{{ $tepatWaktuCount ?? 0 }} <span class="text-xs font-semibold text-slate-500">Hari</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MANFAAT BANGUN PAGI -->
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                        <h4 class="text-sm font-black text-slate-900 border-b border-slate-100 pb-3 uppercase tracking-wider">
+                            Manfaat Utama Bangun Pagi
+                        </h4>
+
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3 bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100">
+                                <span class="text-lg">☀️</span>
+                                <div>
+                                    <p class="text-xs font-extrabold text-amber-950">Fokus Belajar Lebih Tajam</p>
+                                    <p class="text-[11px] text-amber-800 leading-snug mt-0.5">Otak memiliki gelombang alfa yang optimal di pagi hari untuk menyerap materi pelajaran baru.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 bg-emerald-50/70 p-3.5 rounded-2xl border border-emerald-100">
+                                <span class="text-lg">🧘</span>
+                                <div>
+                                    <p class="text-xs font-extrabold text-emerald-950">Bebas Stres Terburu-buru</p>
+                                    <p class="text-[11px] text-emerald-800 leading-snug mt-0.5">Memiliki waktu luang cukup untuk sarapan bergizi, bersiap rapi, dan berangkat tanpa cemas terlambat.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3 bg-blue-50/70 p-3.5 rounded-2xl border border-blue-100">
+                                <span class="text-lg">🌱</span>
+                                <div>
+                                    <p class="text-xs font-extrabold text-blue-950">Membangun Disiplin Diri</p>
+                                    <p class="text-[11px] text-blue-800 leading-snug mt-0.5">Kebiasaan bangun tepat waktu adalah fondasi utama karakter tangguh pemimpin masa depan.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
+
             </div>
+        </form>
 
-            <!-- KARTU 4: REFLEKSI SINGKAT -->
-            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 lg:col-span-2 flex flex-col justify-between">
-                <div>
-                    <h2 class="font-extrabold text-gray-900 text-sm mb-1">Refleksi Singkat</h2>
-                    <p class="text-xs text-gray-400 font-medium mb-3">Tuliskan catatan kecil atau hal positif yang ingin kamu capai hari ini.</p>
-                </div>
-                <div>
-                    <textarea name="refleksi" rows="3" placeholder="Bagaimana perasaanmu setelah bangun lebih awal hari ini? Apa rencanamu untuk hari ini?"
-                              class="w-full bg-gray-50 border border-gray-200 rounded-2xl p-4 text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition resize-none">{{ optional($journal)->refleksi }}</textarea>
-                </div>
-            </div>
-
-        </div>
+        <!-- FORM HIDDEN UNTUK KOSONGKAN JURNAL -->
+        @if($journal)
+            <form id="form-reset-bangun" action="{{ route('student.bangun-pagi.destroy') }}" method="POST" class="hidden">
+                @csrf
+                @method('DELETE')
+            </form>
+        @endif
 
     </main>
-</form>
+</div>
+
+<script>
+    // 1. Evaluasi Waktu Bangun & Status
+    function evaluateWakeTime() {
+        const input = document.getElementById('waktu_bangun_input');
+        const statusInput = document.getElementById('status_waktu_input');
+        const card = document.getElementById('status_card');
+        const icon = document.getElementById('status_icon');
+        const title = document.getElementById('status_title');
+        const desc = document.getElementById('status_desc');
+
+        const val = input.value || '04:30';
+        const clean = val.replace(':', '');
+
+        if (clean <= '0430') {
+            statusInput.value = 'Tepat Waktu';
+            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-emerald-50 border-emerald-200';
+            icon.textContent = '🏆';
+            title.textContent = 'Tepat Waktu (Sangat Baik)';
+            title.className = 'text-xs font-black text-emerald-950 uppercase tracking-wider';
+            desc.textContent = 'Hebat! Bangun sebelum fajar/subuh memberikan energi terbaik dan ketenangan mengawali hari.';
+            desc.className = 'text-xs text-emerald-900 leading-relaxed font-medium';
+        } else if (clean <= '0530') {
+            statusInput.value = 'Cukup Baik';
+            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-blue-50 border-blue-200';
+            icon.textContent = '🌅';
+            title.textContent = 'Cukup Baik (Sebelum Terbit Fajar)';
+            title.className = 'text-xs font-black text-blue-950 uppercase tracking-wider';
+            desc.textContent = 'Bagus! Masih cukup waktu untuk beribadah dan bersiap sekolah dengan tenang tanpa tergesa.';
+            desc.className = 'text-xs text-blue-900 leading-relaxed font-medium';
+        } else if (clean <= '0630') {
+            statusInput.value = 'Lewat Sedikit';
+            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-amber-50 border-amber-200';
+            icon.textContent = '⏰';
+            title.textContent = 'Lewat Sedikit';
+            title.className = 'text-xs font-black text-amber-950 uppercase tracking-wider';
+            desc.textContent = 'Sedikit mepet! Usahakan tidur lebih awal malam ini agar bisa bangun lebih segar besok pagi.';
+            desc.className = 'text-xs text-amber-900 leading-relaxed font-medium';
+        } else {
+            statusInput.value = 'Kesiangan';
+            card.className = 'p-4 sm:p-5 rounded-2xl border transition space-y-2 bg-rose-50 border-rose-200';
+            icon.textContent = '⚠️';
+            title.textContent = 'Kesiangan';
+            title.className = 'text-xs font-black text-rose-950 uppercase tracking-wider';
+            desc.textContent = 'Perlu perbaikan! Bangun kesiangan membuat rutinitas pagi terburu-buru. Evaluasi jam tidur malammu.';
+            desc.className = 'text-xs text-rose-900 leading-relaxed font-medium';
+        }
+    }
+
+    // 2. Preset Cepat Waktu
+    function setTimePreset(timeStr) {
+        document.getElementById('waktu_bangun_input').value = timeStr;
+        evaluateWakeTime();
+    }
+
+    // 3. Highlight Card Rutinitas yang dicentang
+    function updateRoutineUI(checkbox) {
+        const card = checkbox.closest('.routine-card');
+        if (checkbox.checked) {
+            card.classList.remove('border-slate-200', 'bg-white');
+            card.classList.add('border-emerald-600', 'bg-emerald-50/40', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+        } else {
+            card.classList.remove('border-emerald-600', 'bg-emerald-50/40', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+            card.classList.add('border-slate-200', 'bg-white');
+        }
+    }
+
+    // 4. Pilih Mood
+    function selectMood(moodId, element) {
+        document.getElementById('selected_mood').value = moodId;
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+            btn.classList.remove('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+            btn.classList.add('border-slate-200', 'hover:border-slate-300', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
+        });
+        element.classList.remove('border-slate-200', 'hover:border-slate-300', 'text-slate-700', 'bg-white', 'font-medium', 'hover:bg-slate-50');
+        element.classList.add('border-emerald-600', 'bg-emerald-50', 'text-emerald-950', 'font-bold', 'shadow-sm', 'ring-1', 'ring-emerald-500');
+    }
+
+    // 5. Konfirmasi Kosongkan Jurnal
+    function confirmReset() {
+        if (confirm('Apakah kamu yakin ingin mengosongkan jurnal bangun pagi hari ini? Data di dashboard dan catatan akan direset.')) {
+            document.getElementById('form-reset-bangun').submit();
+        }
+    }
+
+    // 6. Inisialisasi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+        evaluateWakeTime();
+        document.querySelectorAll('.routine-card input[type="checkbox"]').forEach(cb => {
+            updateRoutineUI(cb);
+        });
+    });
+</script>
 @endsection

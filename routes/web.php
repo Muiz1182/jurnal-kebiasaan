@@ -119,9 +119,8 @@ Route::middleware(['auth'])->group(function () {
         
         // Rute untuk Halaman & Form Bangun Pagi
         Route::get('/bangun-pagi', [StudentDashboardController::class, 'bangunPagi'])->name('bangun-pagi');
-        
-        // Rute untuk Proses Simpan/Update Form Bangun Pagi
         Route::post('/bangun-pagi', [StudentDashboardController::class, 'updateBangunPagi'])->name('bangun-pagi.update');
+        Route::delete('/bangun-pagi', [StudentDashboardController::class, 'destroyBangunPagi'])->name('bangun-pagi.destroy');
         
         // DIREVISI: Rute Taat Beribadah dipisah ke TaatBeribadahController yang baru
         Route::get('/taat-beribadah', [TaatBeribadahController::class, 'index'])->name('taat-beribadah');
