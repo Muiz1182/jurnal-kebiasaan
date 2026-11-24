@@ -159,21 +159,245 @@
                         <span class="text-xs font-bold text-gray-600">Online</span>
                     </div>
 
-                    <!-- Profil User -->
-                    <div class="flex items-center gap-3 pl-3 border-l border-gray-100">
-                        <!-- Avatar / Inisial Nama -->
-                        <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-900 font-extrabold flex items-center justify-center border border-blue-100 shadow-inner">
-                            {{ strtoupper(substr(Auth::user()->name ?? 'S', 0, 1)) }}
+                    <!-- Profil User dengan Fitur Dropdown & Edit Profile -->
+                    <div class="relative pl-3 border-l border-gray-100" x-data="{ profileOpen: false, editModalOpen: false }" @keydown.escape.window="profileOpen = false; editModalOpen = false">
+                        <!-- Trigger Dropdown Tombol Profil -->
+                        <button type="button" 
+                                @click="profileOpen = !profileOpen" 
+                                class="flex items-center gap-2.5 p-1 sm:px-2.5 sm:py-1.5 rounded-2xl hover:bg-gray-100/80 active:scale-[0.98] transition min-h-[44px] cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-blue-900/20"
+                                :class="{ 'bg-gray-100 ring-2 ring-blue-900/20': profileOpen }"
+                                aria-haspopup="true" 
+                                :aria-expanded="profileOpen">
+                            <!-- Avatar / Foto Profil / Inisial -->
+                            @if(Auth::user()->foto_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->foto_profil))
+                                <img src="{{ \Illuminate\Support\Facades\Storage::url(Auth::user()->foto_profil) }}" alt="{{ Auth::user()->name }}" class="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-blue-200 shadow-sm shrink-0">
+                            @else
+                                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-900 to-indigo-800 text-white font-extrabold flex items-center justify-center text-sm shadow-md shrink-0">
+                                    {{ strtoupper(substr(Auth::user()->name ?? 'S', 0, 1)) }}
+                                </div>
+                            @endif
+
+                            <!-- Info Singkat User Desktop -->
+                            <div class="hidden md:block text-left pr-1">
+                                <p class="text-xs font-extrabold text-gray-900 leading-tight max-w-[130px] truncate">
+                                    {{ Auth::user()->name ?? 'Nama Siswa' }}
+                                </p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                                    {{ Auth::user()->kelas ? 'Kelas ' . Auth::user()->kelas : 'Murid' }}
+                                </p>
+                            </div>
+
+                            <!-- Chevron Arrow Icon -->
+                            <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0" :class="profileOpen ? 'rotate-180 text-blue-900' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+
+                        <!-- DROPDOWN MENU KONTEN -->
+                        <div x-show="profileOpen" 
+                             @click.outside="profileOpen = false" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-2 scale-95"
+                             class="absolute right-0 mt-2.5 w-72 sm:w-80 bg-white rounded-3xl shadow-2xl border border-gray-100 p-2 z-50 overflow-hidden"
+                             style="display: none;">
+                            
+                            <!-- Header Info Kartu Murid -->
+                            <div class="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 text-white p-4 rounded-2xl relative overflow-hidden mb-2">
+                                <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                                <div class="flex items-center gap-3 relative z-10">
+                                    @if(Auth::user()->foto_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->foto_profil))
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::url(Auth::user()->foto_profil) }}" alt="{{ Auth::user()->name }}" class="w-12 h-12 rounded-2xl object-cover border-2 border-white/20 shadow-md shrink-0">
+                                    @else
+                                        <div class="w-12 h-12 rounded-2xl bg-white/15 text-white font-black flex items-center justify-center text-lg border border-white/20 shadow-inner shrink-0">
+                                            {{ strtoupper(substr(Auth::user()->name ?? 'S', 0, 1)) }}
+                                        </div>
+                                    @endif
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="text-xs font-black text-white truncate">{{ Auth::user()->name ?? 'Nama Siswa' }}</h4>
+                                        <p class="text-[10px] text-blue-200 font-medium truncate mt-0.5">{{ Auth::user()->email ?? Auth::user()->username }}</p>
+                                        <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                            <span class="inline-block px-2 py-0.5 rounded-md bg-white/20 text-white text-[9px] font-black tracking-wider uppercase">
+                                                {{ Auth::user()->kelas ? 'Kelas ' . Auth::user()->kelas : 'Murid' }}
+                                            </span>
+                                            @if(Auth::user()->nisn)
+                                                <span class="inline-block px-2 py-0.5 rounded-md bg-white/10 text-blue-100 text-[9px] font-bold">
+                                                    NISN: {{ Auth::user()->nisn }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- List Item Aksi Dropdown -->
+                            <div class="space-y-1">
+                                <!-- Tombol Buka Modal Edit Profile -->
+                                <button type="button" 
+                                        @click="profileOpen = false; editModalOpen = true" 
+                                        class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-blue-50 text-slate-800 hover:text-blue-900 transition text-xs font-bold group cursor-pointer text-left">
+                                    <span class="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 group-hover:bg-blue-100 flex items-center justify-center text-sm shrink-0">
+                                        ✏️
+                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-extrabold text-gray-900 group-hover:text-blue-950">Edit Profil</p>
+                                        <p class="text-[10px] text-gray-400 font-medium">Ubah nama, kelas, NISN, foto & sandi</p>
+                                    </div>
+                                </button>
+
+                                <div class="my-1 border-t border-gray-100"></div>
+
+                                <!-- Tombol Keluar (Logout) -->
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" 
+                                            class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-rose-50 text-rose-600 hover:text-rose-700 transition text-xs font-bold group cursor-pointer text-left">
+                                        <span class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100 flex items-center justify-center text-sm shrink-0">
+                                            🚪
+                                        </span>
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-extrabold text-rose-600">Keluar</p>
+                                            <p class="text-[10px] text-rose-400 font-medium">Akhiri sesi portal akun murid</p>
+                                        </div>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
 
-                        <!-- Nama & Role User -->
-                        <div class="hidden md:block text-left">
-                            <p class="text-xs font-extrabold text-gray-900 leading-tight">
-                                {{ Auth::user()->name ?? 'Nama Siswa' }}
-                            </p>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                                Murid
-                            </p>
+                        <!-- MODAL EDIT PROFILE DIALOG -->
+                        <div x-show="editModalOpen" 
+                             class="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100"
+                             x-transition:leave-end="opacity-0"
+                             style="display: none;">
+                            
+                            <div @click.outside="editModalOpen = false" 
+                                 class="bg-white rounded-3xl shadow-2xl border border-gray-100 max-w-lg w-full max-h-[90vh] overflow-y-auto flex flex-col"
+                                 x-transition:enter="transition ease-out duration-300"
+                                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                 x-transition:leave="transition ease-in duration-200"
+                                 x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+                                 x-transition:leave-end="opacity-0 scale-95 translate-y-4">
+                                
+                                <!-- Header Modal -->
+                                <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10 rounded-t-3xl">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-900 flex items-center justify-center text-lg font-bold">
+                                            👤
+                                        </div>
+                                        <div>
+                                            <h3 class="text-base font-black text-gray-900">Edit Profil Siswa</h3>
+                                            <p class="text-[11px] text-gray-400 font-medium">Perbarui data profil & kata sandi akun Anda</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="editModalOpen = false" class="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-800 flex items-center justify-center transition cursor-pointer text-lg font-bold">
+                                        &times;
+                                    </button>
+                                </div>
+
+                                <!-- Form Edit Profil -->
+                                <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-5">
+                                    @csrf
+                                    @method('PATCH')
+
+                                    <!-- Foto Profil Upload Section -->
+                                    <div class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100" x-data="{ previewPhoto: null }">
+                                        <div class="relative shrink-0">
+                                            <template x-if="previewPhoto">
+                                                <img :src="previewPhoto" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-400 shadow-sm">
+                                            </template>
+                                            <template x-if="!previewPhoto">
+                                                @if(Auth::user()->foto_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->foto_profil))
+                                                    <img src="{{ \Illuminate\Support\Facades\Storage::url(Auth::user()->foto_profil) }}" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-100 shadow-sm">
+                                                @else
+                                                    <div class="w-16 h-16 rounded-2xl bg-blue-900 text-white font-black text-xl flex items-center justify-center border-2 border-blue-200 shadow-inner">
+                                                        {{ strtoupper(substr(Auth::user()->name ?? 'S', 0, 1)) }}
+                                                    </div>
+                                                @endif
+                                            </template>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <label class="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">Foto Profil</label>
+                                            <input type="file" name="foto_profil" accept="image/*" 
+                                                   @change="const file = $event.target.files[0]; if(file) { previewPhoto = URL.createObjectURL(file); }"
+                                                   class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-900 hover:file:bg-blue-100 transition cursor-pointer">
+                                            <p class="text-[10px] text-slate-400 mt-1">Format: JPG, PNG (Maksimal 2 MB)</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Nama Lengkap -->
+                                    <div class="space-y-1.5">
+                                        <label class="block text-xs font-bold text-slate-800">Nama Lengkap Siswa <span class="text-rose-500">*</span></label>
+                                        <input type="text" name="name" value="{{ old('name', Auth::user()->name) }}" required 
+                                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent bg-slate-50/50">
+                                    </div>
+
+                                    <!-- Grid Kelas & NISN -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <!-- Kelas -->
+                                        <div class="space-y-1.5">
+                                            <label class="block text-xs font-bold text-slate-800">Kelas</label>
+                                            <input type="text" name="kelas" value="{{ old('kelas', Auth::user()->kelas) }}" placeholder="Contoh: 7A, 8C, 9B" 
+                                                   class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent bg-slate-50/50">
+                                        </div>
+
+                                        <!-- NISN -->
+                                        <div class="space-y-1.5">
+                                            <label class="block text-xs font-bold text-slate-800">NISN</label>
+                                            <input type="text" name="nisn" value="{{ old('nisn', Auth::user()->nisn) }}" placeholder="Nomor Induk Siswa" 
+                                                   class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent bg-slate-50/50">
+                                        </div>
+                                    </div>
+
+                                    <!-- Username / Email -->
+                                    <div class="space-y-1.5">
+                                        <label class="block text-xs font-bold text-slate-800">Username / Email Akun</label>
+                                        <input type="text" name="username" value="{{ old('username', Auth::user()->username) }}" 
+                                               class="w-full px-4 py-3 rounded-2xl border border-slate-200 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent bg-slate-50/50">
+                                        <p class="text-[10px] text-slate-400">Digunakan untuk login ke sistem portal jurnal murid.</p>
+                                    </div>
+
+                                    <!-- Ganti Password (Opsional) -->
+                                    <div class="pt-2 border-t border-slate-100 space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-slate-800">Ganti Password (Opsional)</span>
+                                            <span class="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">Biarkan kosong jika tetap</span>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-semibold text-slate-600">Password Baru</label>
+                                                <input type="password" name="password" placeholder="Minimal 6 karakter" 
+                                                       class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50/50">
+                                            </div>
+                                            <div class="space-y-1">
+                                                <label class="block text-[11px] font-semibold text-slate-600">Ulangi Password Baru</label>
+                                                <input type="password" name="password_confirmation" placeholder="Ketik ulang password" 
+                                                       class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 bg-slate-50/50">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tombol Aksi Modal Footer -->
+                                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                                        <button type="button" @click="editModalOpen = false" 
+                                                class="min-h-[44px] px-5 py-2.5 rounded-2xl border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-xs transition cursor-pointer">
+                                            Batal
+                                        </button>
+                                        <button type="submit" 
+                                                class="min-h-[44px] px-6 py-2.5 bg-blue-900 hover:bg-blue-800 active:scale-[0.98] text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-950/20 flex items-center justify-center gap-2 transition cursor-pointer">
+                                            <span>💾</span> Simpan Perubahan
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
