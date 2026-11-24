@@ -94,7 +94,8 @@ class GoogleSheetsService
 
     /**
      * Memperbarui baris jika siswa dan tanggal sudah tercatat hari ini,
-     * atau menambahkan baris baru jika belum ada.
+     * mengisi baris kosong jika ada yang dihapus sebelumnya,
+     * atau menambahkan tepat di baris berikutnya tanpa melompat.
      */
     public function updateOrAppendRow($sheetName, array $data, $nameColIndex = 0, $dateColIndex = 1)
     {
@@ -107,45 +108,58 @@ class GoogleSheetsService
             }
             
             $encodedSheet = rawurlencode($sheetName);
-            // 1. Ambil kolom Nama dan Tanggal untuk cek duplikasi
+            // 1. Ambil kolom Nama dan Tanggal untuk cek duplikasi dan baris kosong
             $urlGet = "https://sheets.googleapis.com/v4/spreadsheets/{$spreadsheetId}/values/{$encodedSheet}!A:B";
             $responseGet = Http::withToken($accessToken)->get($urlGet);
             
             $targetRowIndex = null;
+            $firstEmptyRowIndex = null;
+            $totalRows = 0;
+
             if ($responseGet->successful()) {
                 $rows = $responseGet->json('values') ?? [];
+                $totalRows = count($rows);
                 $targetName = trim(strtolower($data[$nameColIndex] ?? ''));
                 $targetDate = trim($data[$dateColIndex] ?? '');
                 
                 foreach ($rows as $index => $row) {
+                    if ($index === 0) continue; // Lewati baris header
+
                     $rowName = trim(strtolower($row[$nameColIndex] ?? ''));
                     $rowDate = trim($row[$dateColIndex] ?? '');
-                    if ($rowName === $targetName && $rowDate === $targetDate) {
+
+                    // Cocokkan data siswa di tanggal yang sama
+                    if (!empty($targetName) && !empty($targetDate) && $rowName === $targetName && $rowDate === $targetDate) {
                         $targetRowIndex = $index + 1; // 1-based index untuk Google Sheets
                         break;
+                    }
+
+                    // Deteksi jika ada baris kosong / dihapus di antara data (misal baris 2 kosong)
+                    if ($firstEmptyRowIndex === null && empty($rowName) && empty($rowDate)) {
+                        $firstEmptyRowIndex = $index + 1;
                     }
                 }
             }
             
-            // 2. Jika baris siswa di tanggal ini sudah ada, perbarui baris tersebut
-            if ($targetRowIndex !== null) {
-                $colEnd = chr(65 + count($data) - 1); // Misal A sampai I
-                $updateRange = "{$encodedSheet}!A{$targetRowIndex}:{$colEnd}{$targetRowIndex}";
-                $urlPut = "https://sheets.googleapis.com/v4/spreadsheets/{$spreadsheetId}/values/{$updateRange}?valueInputOption=USER_ENTERED";
-                
-                $responsePut = Http::withToken($accessToken)->put($urlPut, [
-                    'values' => [$data]
-                ]);
-                
-                if (!$responsePut->successful()) {
-                    Log::error("Google Sheets API Update Error: " . $responsePut->body());
-                    return false;
-                }
-                return true;
-            }
+            // Prioritas penentuan baris:
+            // 1. Baris yang sudah ada dengan Nama & Tanggal yang sama (update in-place)
+            // 2. Baris kosong pertama yang ditemukan (mengisi kembali baris yang sempat terhapus)
+            // 3. Baris berikutnya tepat setelah baris terakhir
+            $targetRow = $targetRowIndex ?? $firstEmptyRowIndex ?? ($totalRows > 0 ? $totalRows + 1 : 2);
+
+            $colEnd = chr(65 + count($data) - 1); // Misal A sampai I
+            $updateRange = "{$encodedSheet}!A{$targetRow}:{$colEnd}{$targetRow}";
+            $urlPut = "https://sheets.googleapis.com/v4/spreadsheets/{$spreadsheetId}/values/{$updateRange}?valueInputOption=USER_ENTERED";
             
-            // 3. Jika belum ada, gunakan appendRow biasa
-            return $this->appendRow($sheetName, $data);
+            $responsePut = Http::withToken($accessToken)->put($urlPut, [
+                'values' => [$data]
+            ]);
+            
+            if (!$responsePut->successful()) {
+                Log::error("Google Sheets API Update Error: " . $responsePut->body());
+                return $this->appendRow($sheetName, $data);
+            }
+            return true;
         } catch (Exception $e) {
             Log::error("GoogleSheetsService Exception in updateOrAppendRow: " . $e->getMessage());
             return $this->appendRow($sheetName, $data);
