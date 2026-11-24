@@ -3,10 +3,10 @@
 @section('title', 'Taat Beribadah')
 
 @section('content')
-<div class="flex-1 p-8 space-y-6 overflow-y-auto bg-gray-50/50">
+<div class="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
     
     <!-- HEADER HALAMAN -->
-    <div class="relative p-6 md:p-8 rounded-3xl shadow-sm text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 overflow-hidden">
+    <div class="relative p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl shadow-sm text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6 overflow-hidden">
         <div class="absolute inset-0 bg-cover bg-center z-0" style="background-image: url('https://images.unsplash.com/photo-1564121211835-e88c852651ab?auto=format&fit=crop&q=80&w=1200');"></div>
         <div class="absolute inset-0 bg-gradient-to-r from-emerald-950 via-emerald-950/90 to-teal-900/60 z-0"></div>
 
@@ -131,9 +131,9 @@
                 <textarea name="refleksi" rows="4" placeholder="Bagaimana kekhusyukan dan perasaanmu dalam beribadah hari ini?" class="w-full rounded-2xl border-gray-200 border p-4 text-sm text-gray-800 focus:ring-2 focus:ring-emerald-900 focus:border-transparent outline-none resize-none">{{ optional($journal)->refleksi }}</textarea>
             </div>
 
-            <div class="flex justify-end">
-                <button type="submit" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-6 py-3 rounded-2xl shadow-sm transition">
-                    Simpan Jurnal
+            <div class="flex items-center justify-end pt-1">
+                <button type="submit" class="w-full sm:w-auto min-h-[48px] bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-black px-8 py-3.5 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition text-xs sm:text-sm cursor-pointer">
+                    <span>💾</span> Simpan Jurnal Ibadah
                 </button>
             </div>
 

@@ -3,8 +3,7 @@
 @section('title', 'Rajin Berolahraga - Jurnal Harian 7 Kebiasaan Anak Indonesia')
 
 @section('content')
-<div class="flex min-h-screen bg-slate-50 w-full">
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto max-w-7xl mx-auto">
+<div class="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
 
         <!-- Notifikasi Flash Message -->
         @if(session('success'))
@@ -61,26 +60,22 @@
                 </div>
 
                 <!-- Indikator Tanggal & Tombol Aksi -->
-                <div class="flex flex-wrap items-center gap-3">
-                    <div class="bg-slate-800/90 border border-slate-700 px-4 py-3 rounded-2xl flex items-center gap-3">
-                        <span class="text-xl">📅</span>
-                        <div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto shrink-0">
+                    <div class="bg-slate-800/90 border border-slate-700 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl flex items-center gap-3">
+                        <span class="text-lg sm:text-xl shrink-0">📅</span>
+                        <div class="min-w-0">
                             <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">TANGGAL HARI INI</p>
-                            <p class="text-xs sm:text-sm font-extrabold text-white">
+                            <p class="text-xs sm:text-sm font-extrabold text-white truncate">
                                 {{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}
                             </p>
                         </div>
                     </div>
 
                     @if($journal)
-                        <button type="button" onclick="confirmReset()" class="bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 font-bold px-4 py-3 rounded-2xl transition text-xs flex items-center gap-2">
+                        <button type="button" onclick="confirmReset()" class="w-full sm:w-auto min-h-[44px] bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 font-bold px-3.5 py-2.5 rounded-xl sm:rounded-2xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer">
                             <span>🗑️</span> Kosongkan
                         </button>
                     @endif
-
-                    <button type="button" onclick="document.getElementById('form-olahraga').submit()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center gap-2 transition text-xs sm:text-sm cursor-pointer">
-                        <span>💾</span> Simpan Jurnal
-                    </button>
                 </div>
             </div>
         </div>
@@ -454,7 +449,6 @@
             </form>
         @endif
 
-    </main>
 </div>
 
 <script>

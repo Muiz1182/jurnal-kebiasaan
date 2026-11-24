@@ -3,9 +3,7 @@
 @section('title', 'Makan Sehat & Bergizi')
 
 @section('content')
-<div class="flex min-h-screen bg-gray-50 w-full">
-    
-    <main class="flex-1 p-4 sm:p-8 space-y-6 overflow-y-auto">
+<div class="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
         
         <!-- Notifikasi Pesan Sukses -->
         @if(session('success'))
@@ -40,8 +38,8 @@
                     </p>
                 </div>
 
-                <!-- Bagian Tanggal & Tombol Aksi -->
-                <div class="flex items-center gap-4 z-10 w-full md:w-auto justify-between md:justify-end flex-wrap">
+                <!-- Bagian Tanggal -->
+                <div class="flex items-center gap-4 z-10 w-full md:w-auto justify-between md:justify-end">
                     <div class="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-3 rounded-2xl flex items-center gap-3">
                         <span class="text-xl">📅</span>
                         <div>
@@ -49,10 +47,6 @@
                             <p class="text-xs sm:text-sm font-extrabold text-white">{{ \Carbon\Carbon::now()->translatedFormat('l, d M Y') }}</p>
                         </div>
                     </div>
-
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition text-xs sm:text-sm cursor-pointer">
-                        <span>💾</span> Simpan Jurnal
-                    </button>
                 </div>
             </div>
 
@@ -209,6 +203,13 @@
                         </div>
                     </div>
 
+                    <!-- Tombol Simpan Bawah -->
+                    <div class="flex items-center justify-end pt-2">
+                        <button type="submit" class="w-full sm:w-auto min-h-[48px] bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-black px-8 py-3.5 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition text-xs sm:text-sm cursor-pointer">
+                            <span>💾</span> Simpan Jurnal Makan Sehat
+                        </button>
+                    </div>
+
                 </div>
 
                 <!-- KOLOM KANAN (Sidebar Widget: Evaluasi Gizi & Rating) -->
@@ -325,7 +326,6 @@
             </div>
         </form>
 
-    </main>
 </div>
 
 <script>

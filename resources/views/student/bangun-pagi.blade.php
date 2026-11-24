@@ -93,17 +93,11 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    @if($journal)
-                        <button type="button" onclick="confirmReset()" class="flex-1 sm:flex-none min-h-[44px] bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 font-bold px-3.5 py-2.5 rounded-xl sm:rounded-2xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer">
-                            <span>🗑️</span> Kosongkan
-                        </button>
-                    @endif
-
-                    <button type="button" onclick="document.getElementById('form-bangun-pagi').submit()" class="flex-1 sm:flex-none min-h-[44px] bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-black px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition text-xs sm:text-sm cursor-pointer">
-                        <span>💾</span> Simpan Jurnal
+                @if($journal)
+                    <button type="button" onclick="confirmReset()" class="w-full sm:w-auto min-h-[44px] bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 font-bold px-3.5 py-2.5 rounded-xl sm:rounded-2xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                        <span>🗑️</span> Kosongkan
                     </button>
-                </div>
+                @endif
             </div>
         </div>
     </div>

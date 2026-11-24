@@ -3,9 +3,7 @@
 @section('title', 'Tidur Cepat & Istirahat Berkualitas')
 
 @section('content')
-<div class="flex min-h-screen bg-gray-50 w-full">
-    
-    <main class="flex-1 p-4 sm:p-8 space-y-6 overflow-y-auto">
+<div class="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
         
         <!-- Notifikasi Pesan Sukses -->
         @if(session('success'))
@@ -52,27 +50,21 @@
                 </div>
 
                 <!-- Bagian Tanggal & Tombol Aksi -->
-                <div class="flex items-center gap-4 z-10 w-full md:w-auto justify-between md:justify-end flex-wrap">
-                    <div class="bg-white/10 backdrop-blur-md border border-white/10 px-4 py-3 rounded-2xl flex items-center gap-3">
-                        <span class="text-xl">🌙</span>
-                        <div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto shrink-0">
+                    <div class="bg-white/10 backdrop-blur-md border border-white/10 px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl flex items-center gap-3">
+                        <span class="text-lg sm:text-xl shrink-0">🌙</span>
+                        <div class="min-w-0">
                             <p class="text-[9px] font-black uppercase tracking-widest text-blue-300">MALAM INI</p>
-                            <p class="text-xs sm:text-sm font-extrabold text-white">{{ \Carbon\Carbon::now()->translatedFormat('l, d M Y') }}</p>
+                            <p class="text-xs sm:text-sm font-extrabold text-white truncate">{{ \Carbon\Carbon::now()->translatedFormat('l, d M Y') }}</p>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        @if($journal)
-                            <button type="button" onclick="if(confirm('Yakin ingin mengosongkan jurnal tidur cepat hari ini?')) { document.getElementById('delete-journal-form').submit(); }" 
-                                class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 font-extrabold px-4 py-3.5 rounded-2xl flex items-center gap-2 transition text-xs sm:text-sm cursor-pointer">
-                                <span>🗑️</span> Kosongkan
-                            </button>
-                        @endif
-
-                        <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 transition text-xs sm:text-sm cursor-pointer">
-                            <span>💾</span> Simpan Jurnal
+                    @if($journal)
+                        <button type="button" onclick="if(confirm('Yakin ingin mengosongkan jurnal tidur cepat hari ini?')) { document.getElementById('delete-journal-form').submit(); }" 
+                            class="w-full sm:w-auto min-h-[44px] bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/30 font-extrabold px-4 py-2.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 transition text-xs sm:text-sm cursor-pointer">
+                            <span>🗑️</span> Kosongkan
                         </button>
-                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -246,6 +238,13 @@
                             placeholder="Tuliskan rasa syukur atau tekad perbaikan untuk hari esok...">{{ old('refleksi_malam', optional($journal)->refleksi_malam) }}</textarea>
                     </div>
 
+                    <!-- Tombol Simpan Bawah -->
+                    <div class="flex items-center justify-end pt-2">
+                        <button type="submit" class="w-full sm:w-auto min-h-[48px] bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-black px-8 py-3.5 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition text-xs sm:text-sm cursor-pointer">
+                            <span>💾</span> Simpan Jurnal Tidur Cepat
+                        </button>
+                    </div>
+
                 </div>
 
                 <!-- KOLOM KANAN (Statistik Pekan Ini, Tips Tidur & Riwayat) -->
@@ -329,7 +328,6 @@
             </form>
         @endif
 
-    </main>
 </div>
 
 <script>
