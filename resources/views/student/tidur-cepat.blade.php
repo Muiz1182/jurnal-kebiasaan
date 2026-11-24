@@ -5,25 +5,6 @@
 @section('content')
 <div class="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
         
-        <!-- Notifikasi Pesan Sukses -->
-        @if(session('success'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-2xl shadow-sm text-sm font-medium flex items-center gap-3" role="alert">
-                <span class="text-xl">✨</span>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="bg-rose-50 border border-rose-200 text-rose-800 px-5 py-4 rounded-2xl shadow-sm text-xs font-semibold space-y-1">
-                <p class="font-bold">Mohon periksa kembali form Anda:</p>
-                <ul class="list-disc list-inside">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <form id="form-tidur-cepat" action="{{ route('student.tidur-cepat.store') }}" method="POST">
             @csrf
 

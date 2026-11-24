@@ -8,30 +8,6 @@
      data-server-time="{{ $serverTime }}"
      data-server-timestamp="{{ $serverTimestamp }}">
 
-    <!-- Notifikasi Flash Message -->
-    @if(session('success'))
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 sm:px-5 py-3.5 rounded-2xl shadow-sm text-xs sm:text-sm font-semibold flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5 min-w-0">
-                <span class="text-lg shrink-0">✅</span>
-                <span class="break-words">{{ session('success') }}</span>
-            </div>
-            <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-950 font-bold text-lg leading-none shrink-0 p-1">&times;</button>
-        </div>
-    @endif
-
-    @if(isset($errors) && $errors->any())
-        <div class="bg-rose-50 border border-rose-200 text-rose-900 px-4 sm:px-5 py-3.5 rounded-2xl shadow-sm text-xs sm:text-sm font-semibold space-y-1">
-            <div class="flex items-center gap-2 text-rose-700 font-bold">
-                <span>⚠️</span> Mohon periksa isian formulir:
-            </div>
-            <ul class="list-disc list-inside text-xs text-rose-800 space-y-0.5">
-                @foreach($errors->all() as $err)
-                    <li>{{ $err }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     <!-- BANNER PERINGATAN JIKA TERDETEKSI MANIPULASI JAM HP -->
     <div id="tamper_warning_banner" class="hidden bg-amber-500/10 border-2 border-amber-500/30 p-4 sm:p-5 rounded-2xl sm:rounded-3xl text-amber-950 space-y-1.5 shadow-sm">
         <div class="flex items-center gap-2.5">

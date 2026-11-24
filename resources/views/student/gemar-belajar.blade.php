@@ -5,14 +5,6 @@
 @section('content')
 <div class="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
         
-        <!-- Notifikasi Pesan Sukses -->
-        @if(session('success'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-5 py-4 rounded-2xl shadow-sm text-sm font-medium flex items-center gap-3" role="alert">
-                <span class="text-xl">✨</span>
-                <span>{{ session('success') }}</span>
-            </div>
-        @endif
-
         <form id="form-gemar-belajar" action="{{ route('student.gemar-belajar.store') }}" method="POST">
             @csrf
 

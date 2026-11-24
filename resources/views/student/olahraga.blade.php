@@ -5,30 +5,6 @@
 @section('content')
 <div class="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
 
-        <!-- Notifikasi Flash Message -->
-        @if(session('success'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 px-5 py-4 rounded-2xl shadow-sm text-sm font-semibold flex items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <span class="text-xl">✅</span>
-                    <span>{{ session('success') }}</span>
-                </div>
-                <button type="button" onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-950 font-bold text-lg leading-none">&times;</button>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="bg-rose-50 border border-rose-200 text-rose-900 px-5 py-4 rounded-2xl shadow-sm text-sm font-semibold space-y-1">
-                <div class="flex items-center gap-2 text-rose-700 font-bold">
-                    <span>⚠️</span> Mohon lengkapi isian formulir:
-                </div>
-                <ul class="list-disc list-inside text-xs text-rose-800 space-y-0.5">
-                    @foreach($errors->all() as $err)
-                        <li>{{ $err }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <!-- HEADER BANNER NAVY MODERN (ANTISLOP) -->
         <div class="bg-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden border border-slate-800">
             <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
