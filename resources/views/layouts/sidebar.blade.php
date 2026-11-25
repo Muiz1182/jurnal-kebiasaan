@@ -1,65 +1,154 @@
-<aside class="w-64 bg-gray-900 text-white p-6 flex flex-col justify-between" 
-       x-data="{ openAbsensi: {{ request()->routeIs('attendance.*') ? 'true' : 'false' }}, openNilai: {{ request()->routeIs('grades.*') ? 'true' : 'false' }} }">
+<!-- OVERLAY BACKDROP UNTUK MOBILE DRAWER -->
+<div x-show="sidebarOpen" 
+     x-cloak
+     @click="sidebarOpen = false" 
+     x-transition:enter="transition-opacity ease-linear duration-200"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition-opacity ease-linear duration-200"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0"
+     class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-40 lg:hidden">
+</div>
+
+<!-- SIDEBAR ASIDE -->
+<aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+       class="fixed inset-y-0 left-0 z-50 w-72 bg-[#0A1128] text-white flex flex-col justify-between border-r border-slate-800 shrink-0 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 shadow-2xl lg:shadow-none"
+       x-data="{ 
+           openAbsensi: {{ request()->routeIs('attendance.*') ? 'true' : 'false' }}, 
+           openNilai: {{ request()->routeIs('grades.*') ? 'true' : 'false' }} 
+       }">
+
     <div>
-        <!-- Logo Section -->
-        <div class="flex flex-col items-center mb-10 text-center">
-            <img src="{{ asset('images/LOGO SMP 9 TRANS.png') }}" alt="Logo" class="w-16 h-16 mb-4 rounded-2xl shadow-lg border border-gray-800">
-            <h2 class="font-black text-sm tracking-tight text-white">SMPN 9 PROBOLINGGO</h2>
-            <p class="text-[9px] text-gray-500 uppercase tracking-[0.2em] font-black mt-1">Academic Portal</p>
+        <!-- Logo & Brand Header -->
+        <div class="p-6 flex items-center justify-between border-b border-slate-800/80">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-white flex items-center justify-center p-2 shadow-md shrink-0">
+                    <img src="{{ asset('images/LOGO SMP 9 TRANS.png') }}" alt="Logo SMPN 9" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    <span class="text-blue-900 font-black text-xs hidden">SMP9</span>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm tracking-tight text-white leading-tight">Guru Portal</h1>
+                    <p class="text-[10px] text-blue-300 font-bold tracking-wider uppercase mt-0.5">SMPN 9 Probolinggo</p>
+                </div>
+            </div>
+
+            <!-- Tombol Tutup Sidebar di Mobile -->
+            <button type="button" 
+                    @click="sidebarOpen = false" 
+                    aria-label="Tutup menu sidebar"
+                    class="lg:hidden w-10 h-10 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white flex items-center justify-center transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
 
-        <!-- Navigation Menu -->
-        <nav class="space-y-1">
-            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 p-3 {{ request()->routeIs('dashboard') ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} rounded-2xl transition font-black uppercase text-[10px] tracking-widest">
-                <i class="fas fa-th-large text-sm"></i>
-                Dashboard
+        <!-- Menu Navigasi Utama -->
+        <nav class="p-4 space-y-1.5 text-sm font-semibold">
+            
+            <!-- Dashboard -->
+            <a href="{{ route('dashboard') }}" 
+               class="flex items-center gap-3 px-4 py-3 min-h-[48px] rounded-2xl transition {{ request()->routeIs('dashboard') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/30 font-bold' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                <div class="w-5 h-5 flex items-center justify-center text-base">
+                    <i class="fas fa-th-large"></i>
+                </div>
+                <span>Dashboard Guru</span>
             </a>
 
-            <a href="{{ route('journal.create') }}" class="flex items-center gap-3 p-3 {{ request()->routeIs('journal.*') ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} rounded-2xl transition font-black uppercase text-[10px] tracking-widest">
-                <i class="fas fa-book text-sm"></i>
-                Jurnal Mengajar
+            <!-- Jurnal Mengajar -->
+            <a href="{{ route('journal.create') }}" 
+               class="flex items-center gap-3 px-4 py-3 min-h-[48px] rounded-2xl transition {{ request()->routeIs('journal.*') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/30 font-bold' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                <div class="w-5 h-5 flex items-center justify-center text-base">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <span>Jurnal Mengajar</span>
             </a>
 
-            <!-- Dropdown Absensi -->
-            <div>
-                <button @click="openAbsensi = !openAbsensi" class="w-full flex items-center justify-between p-3 {{ request()->routeIs('attendance.*') ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} rounded-2xl transition font-black uppercase text-[10px] tracking-widest">
+            <!-- Dropdown Absensi Siswa -->
+            <div class="space-y-1">
+                <button type="button" 
+                        @click="openAbsensi = !openAbsensi" 
+                        class="w-full flex items-center justify-between px-4 py-3 min-h-[48px] rounded-2xl transition cursor-pointer {{ request()->routeIs('attendance.*') ? 'bg-blue-900/40 text-blue-200 border border-blue-800/60 font-bold' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-users text-sm"></i>
-                        <span>Absensi</span>
+                        <div class="w-5 h-5 flex items-center justify-center text-base">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <span>Presensi Siswa</span>
                     </div>
-                    <i class="fas fa-chevron-down text-[8px] transition-transform" :class="openAbsensi ? 'rotate-180' : ''"></i>
+                    <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="openAbsensi ? 'rotate-180' : ''"></i>
                 </button>
 
-                <div x-show="openAbsensi" x-cloak class="mt-1 ml-4 pl-4 border-l border-gray-800 space-y-1">
-                    <a href="{{ route('attendance.index') }}" class="block p-2 text-[10px] font-bold {{ request()->routeIs('attendance.index') ? 'text-white' : 'text-gray-500 hover:text-white' }} transition">Input Data</a>
-                    <a href="{{ route('attendance.recap') }}" class="block p-2 text-[10px] font-bold {{ request()->routeIs('attendance.recap') ? 'text-white' : 'text-gray-500 hover:text-white' }} transition">Rekap Absensi</a>
+                <div x-show="openAbsensi" x-cloak class="pl-11 pr-2 py-1 space-y-1">
+                    <a href="{{ route('attendance.index') }}" 
+                       class="block px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition flex items-center {{ request()->routeIs('attendance.index') ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+                        Input Presensi Harian
+                    </a>
+                    <a href="{{ route('attendance.recap') }}" 
+                       class="block px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition flex items-center {{ request()->routeIs('attendance.recap') ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+                        Rekapitulasi Presensi
+                    </a>
                 </div>
             </div>
 
-            <!-- Dropdown Nilai -->
-            <div>
-                <button @click="openNilai = !openNilai" class="w-full flex items-center justify-between p-3 {{ request()->routeIs('grades.*') ? 'bg-gray-800 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-800' }} rounded-2xl transition font-black uppercase text-[10px] tracking-widest">
+            <!-- Dropdown Penilaian Siswa -->
+            <div class="space-y-1">
+                <button type="button" 
+                        @click="openNilai = !openNilai" 
+                        class="w-full flex items-center justify-between px-4 py-3 min-h-[48px] rounded-2xl transition cursor-pointer {{ request()->routeIs('grades.*') ? 'bg-blue-900/40 text-blue-200 border border-blue-800/60 font-bold' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-file-alt text-sm"></i>
-                        <span>Input Nilai</span>
+                        <div class="w-5 h-5 flex items-center justify-center text-base">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <span>Penilaian Siswa</span>
                     </div>
-                    <i class="fas fa-chevron-down text-[8px] transition-transform" :class="openNilai ? 'rotate-180' : ''"></i>
+                    <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="openNilai ? 'rotate-180' : ''"></i>
                 </button>
 
-                <div x-show="openNilai" x-cloak class="mt-1 ml-4 pl-4 border-l border-gray-800 space-y-1">
-                    <a href="{{ route('grades.index') }}" class="block p-2 text-[10px] font-bold {{ request()->routeIs('grades.index') ? 'text-white' : 'text-gray-500 hover:text-white' }} transition">Input Data Nilai</a>
-                    <a href="{{ route('grades.recap') }}" class="block p-2 text-[10px] font-bold {{ request()->routeIs('grades.recap') ? 'text-white' : 'text-gray-500 hover:text-white' }} transition">Rekap Nilai</a>
+                <div x-show="openNilai" x-cloak class="pl-11 pr-2 py-1 space-y-1">
+                    <a href="{{ route('grades.index') }}" 
+                       class="block px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition flex items-center {{ request()->routeIs('grades.index') ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+                        Input Nilai Siswa
+                    </a>
+                    <a href="{{ route('grades.recap') }}" 
+                       class="block px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-bold transition flex items-center {{ request()->routeIs('grades.recap') ? 'bg-blue-900 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/40' }}">
+                        Rekap &amp; Ekspor Nilai
+                    </a>
                 </div>
             </div>
+
+            <!-- Pengaturan Akun -->
+            <a href="{{ route('settings.index') }}" 
+               class="flex items-center gap-3 px-4 py-3 min-h-[48px] rounded-2xl transition {{ request()->routeIs('settings.*') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/30 font-bold' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
+                <div class="w-5 h-5 flex items-center justify-center text-base">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <span>Pengaturan Profil</span>
+            </a>
         </nav>
     </div>
 
-    <!-- Logout -->
-    <form action="{{ route('logout') }}" method="POST" class="border-t border-gray-800 pt-6">
-        @csrf
-        <button type="submit" class="w-full flex items-center gap-3 text-red-500 hover:text-red-400 transition font-black uppercase text-[10px] tracking-widest">
-            <i class="fas fa-sign-out-alt"></i> 
-            Logout
-        </button>
-    </form>
+    <!-- Sidebar Footer (Info Profil Guru & Tombol Logout) -->
+    <div class="p-4 border-t border-slate-800/80 space-y-3">
+        <!-- Kartu Guru -->
+        <div class="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800">
+            <div class="w-10 h-10 rounded-xl bg-blue-900 text-white font-extrabold flex items-center justify-center shrink-0 shadow-sm text-sm border border-blue-700">
+                {{ strtoupper(substr(auth()->user()->name ?? 'G', 0, 1)) }}
+            </div>
+            <div class="min-w-0 flex-1">
+                <p class="font-bold text-xs text-white truncate">{{ auth()->user()->name }}</p>
+                <p class="text-[10px] text-slate-400 font-semibold truncate">{{ auth()->user()->jabatan ?? 'Tenaga Pendidik' }}</p>
+            </div>
+        </div>
+
+        <!-- Tombol Logout -->
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit" 
+                    class="w-full min-h-[48px] flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 hover:text-rose-200 border border-rose-500/20 text-xs font-bold transition cursor-pointer">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Keluar dari Portal</span>
+            </button>
+        </form>
+    </div>
 </aside>

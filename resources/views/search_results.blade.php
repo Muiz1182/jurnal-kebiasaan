@@ -1,39 +1,67 @@
 @extends('layouts.app')
 
-@section('title', 'Pengaturan Profil')
+@section('title', 'Hasil Pencarian')
 
 @section('content')
+<div class="max-w-4xl mx-auto space-y-6">
 
-    <div class="max-w-4xl mx-auto">
-        <div class="flex items-center gap-4 mb-8">
-            <a href="{{ route('dashboard') }}" class="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    <!-- HEADER PENCARIAN -->
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a href="{{ route('dashboard') }}" 
+               aria-label="Kembali ke Dashboard"
+               class="w-11 h-11 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition shrink-0">
+                <i class="fas fa-arrow-left"></i>
             </a>
             <div>
-                <h1 class="text-2xl font-bold text-blue-900">Hasil Pencarian</h1>
-                <p class="text-gray-500 text-sm">Menampilkan hasil untuk: <span class="font-bold italic">"{{ $query }}"</span></p>
+                <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold mb-1">
+                    <a href="{{ route('dashboard') }}" class="hover:text-blue-900 transition">Dashboard</a>
+                    <span>&gt;</span>
+                    <span class="text-blue-900 font-bold">Pencarian</span>
+                </nav>
+                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                    Hasil Pencarian
+                </h1>
+                <p class="text-xs text-slate-500 font-medium mt-0.5">
+                    Menampilkan data yang cocok dengan kata kunci: <span class="font-extrabold text-blue-900 italic">"{{ $query }}"</span>
+                </p>
             </div>
         </div>
-
-        <div class="bg-white p-8 rounded-2xl border shadow-sm">
-            @if(isset($results) && count($results) > 0)
-                <ul class="space-y-4">
-                    @foreach($results as $item)
-                        <li class="p-4 border-b last:border-0 hover:bg-gray-50 transition rounded-lg">
-                            <a href="#" class="block">
-                                <h3 class="font-bold text-blue-900">{{ $item->title ?? 'Data Ditemukan' }}</h3>
-                                <p class="text-sm text-gray-500">{{ $item->description ?? 'Deskripsi singkat item terkait...' }}</p>
-                            </a>
-                        </li>
-                    @endforeach
-                </ul>
-            @else
-                <div class="text-center py-12">
-                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <p class="text-gray-500 font-medium">Maaf, tidak ada data yang cocok dengan "{{ $query }}".</p>
-                    <a href="{{ route('dashboard') }}" class="text-blue-900 font-bold underline mt-4 block">Kembali ke Dashboard</a>
-                </div>
-            @endif
-        </div>
     </div>
+
+    <!-- HASIL PENCARIAN -->
+    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+        @if(isset($results) && count($results) > 0)
+            <ul class="divide-y divide-slate-100 text-xs sm:text-sm">
+                @foreach($results as $item)
+                    <li class="p-5 sm:p-6 hover:bg-slate-50/70 transition">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center text-sm font-black shrink-0 border border-blue-100">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-bold text-slate-900 text-sm">{{ $item->title ?? 'Data Ditemukan' }}</h3>
+                                <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{ $item->description ?? 'Deskripsi item...' }}</p>
+                            </div>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        @else
+            <div class="py-16 text-center text-slate-400 p-6">
+                <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl text-slate-400">
+                    🔍
+                </div>
+                <p class="font-extrabold text-sm text-slate-700">Tidak ada data yang cocok</p>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    Pencarian untuk "{{ $query }}" tidak menemukan hasil. Coba gunakan kata kunci lainnya.
+                </p>
+                <a href="{{ route('dashboard') }}" class="inline-flex items-center gap-2 mt-4 px-5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold transition">
+                    Kembali ke Dashboard Guru
+                </a>
+            </div>
+        @endif
+    </div>
+
+</div>
 @endsection

@@ -1,154 +1,265 @@
 @extends('layouts.app')
 
-@section('title', 'Input Nilai')
+@section('title', 'Input Nilai Siswa')
 
 @section('content')
-<div class="w-full px-6 py-6">
+<div class="space-y-6 sm:space-y-8">
 
-    <!-- Header Informasi -->
-    <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm mb-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div>
-                <nav class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-                    <a href="{{ route('dashboard') }}" class="hover:text-blue-900">Dashboard</a> /
-                    <span class="text-blue-900">Input Nilai</span>
-                </nav>
-                <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Penginputan Nilai</h1>
-                <p class="text-gray-500 text-sm mt-1">Kelola pencapaian akademik siswa untuk semester ganjil 2026/2027.</p>
+    <!-- HEADER INFORMASI & RINGKASAN AKADEMIK -->
+    <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div>
+            <nav class="flex items-center gap-2 text-xs text-slate-400 font-semibold mb-2">
+                <a href="{{ route('dashboard') }}" class="hover:text-blue-900 transition">Dashboard</a>
+                <span>&gt;</span>
+                <span class="text-blue-900 font-bold">Penginputan Nilai</span>
+            </nav>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Penilaian Akademik Siswa
+            </h1>
+            <p class="text-xs sm:text-sm text-slate-500 font-medium mt-1">
+                Kelola nilai tugas, praktik, ulangan harian, UTS, dan UAS semester aktif.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center text-sm font-black shrink-0">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Tanggal Input</span>
+                    <span class="text-xs sm:text-sm font-extrabold text-slate-800">{{ date('d F Y') }}</span>
+                </div>
             </div>
 
-            <div class="flex gap-3">
-                <div class="border border-gray-100 bg-gray-50 rounded-2xl p-4 flex items-center gap-3">
-                    <i class="fas fa-calendar-alt text-gray-400"></i>
-                    <div>
-                        <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tanggal</div>
-                        <div class="font-bold text-gray-800 text-sm">{{ date('d F Y') }}</div>
-                    </div>
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-black shrink-0">
+                    <i class="fas fa-user-graduate"></i>
                 </div>
-                <div class="border border-gray-100 bg-gray-50 rounded-2xl p-4 flex items-center gap-3">
-                    <i class="fas fa-users text-gray-400"></i>
-                    <div>
-                        <div class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Siswa</div>
-                        <div class="font-bold text-gray-800 text-sm">{{ $students->count() }} Peserta Didik</div>
-                    </div>
+                <div>
+                    <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider block">Total Murid</span>
+                    <span class="text-xs sm:text-sm font-extrabold text-slate-800">{{ $students->count() }} Siswa</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Filter & Simpan Bar -->
-    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-8 flex flex-wrap items-center justify-between gap-6">
-        <div class="flex items-center gap-6 flex-wrap">
-            <div class="flex items-center gap-3 font-black text-gray-400 uppercase text-[10px] tracking-widest">
-                <i class="fas fa-filter"></i> Filter Data:
+    <!-- FILTER BAR & SIMPAN PERUBAHAN -->
+    <div class="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        
+        <!-- Filter Mapel & Kelas -->
+        <form action="{{ route('grades.index') }}" method="GET" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+            <div class="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-wider shrink-0 hidden sm:flex">
+                <i class="fas fa-filter text-blue-900"></i>
+                <span>Filter:</span>
             </div>
-            <form action="{{ route('grades.index') }}" method="GET" class="flex gap-4 flex-wrap">
-                <select name="subject" onchange="this.form.submit()" class="p-3 bg-gray-50 border border-gray-100 rounded-2xl w-48 text-sm font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all cursor-pointer" required>
-                    <option value="">Pilih Mapel</option>
-                    @foreach(auth()->user()->subjects as $subj)
-                        <option value="{{ $subj->id }}" {{ (isset($selectedSubject) && $selectedSubject == $subj->id) ? 'selected' : '' }}>
-                            {{ $subj->name }}
-                        </option>
-                    @endforeach
-                </select>
 
-                <select name="class" onchange="this.form.submit()" class="p-3 bg-gray-50 border border-gray-100 rounded-2xl w-40 text-sm font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-50 transition-all cursor-pointer" required>
-                    <option value="">Pilih Kelas</option>
-                    @foreach($classes as $cls)
-                        <option value="{{ $cls }}" {{ (isset($selectedClass) && $selectedClass == $cls) ? 'selected' : '' }}>Kelas {{ $cls }}</option>
-                    @endforeach
-                </select>
-            </form>
+            <select name="subject" 
+                    onchange="this.form.submit()" 
+                    class="min-h-[48px] px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer" 
+                    required>
+                <option value="">Pilih Mata Pelajaran</option>
+                @foreach(auth()->user()->subjects as $subj)
+                    <option value="{{ $subj->id }}" {{ (isset($selectedSubject) && $selectedSubject == $subj->id) ? 'selected' : '' }}>
+                        {{ $subj->name }}
+                    </option>
+                @endforeach
+            </select>
+
+            <select name="class" 
+                    onchange="this.form.submit()" 
+                    class="min-h-[48px] px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer" 
+                    required>
+                <option value="">Pilih Kelas</option>
+                @foreach($classes as $cls)
+                    <option value="{{ $cls }}" {{ (isset($selectedClass) && $selectedClass == $cls) ? 'selected' : '' }}>
+                        Kelas {{ $cls }}
+                    </option>
+                @endforeach
+            </select>
+        </form>
+
+        <!-- Tombol Aksi Simpan & Rekap -->
+        <div class="flex items-center gap-2.5 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+            @if(isset($selectedSubject))
+                <button type="submit" 
+                        form="gradeForm" 
+                        class="min-h-[48px] px-6 py-2.5 rounded-2xl bg-blue-900 hover:bg-blue-800 text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-blue-900/20 transition cursor-pointer">
+                    <i class="fas fa-save"></i>
+                    <span>Simpan Perubahan</span>
+                </button>
+            @endif
+
+            <a href="{{ route('grades.recap', ['class' => $selectedClass ?? '', 'subject' => $selectedSubject ?? '']) }}" 
+               class="min-h-[48px] px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+                <i class="fas fa-chart-bar"></i>
+                <span class="hidden sm:inline">Rekap Nilai</span>
+            </a>
         </div>
-
-        @if(isset($selectedSubject))
-            <button type="submit" form="gradeForm" class="px-8 py-3 bg-gray-900 text-white rounded-2xl font-bold hover:bg-gray-800 transition shadow-lg shadow-gray-900/10 whitespace-nowrap">
-                <i class="fas fa-save mr-2"></i> Simpan Perubahan
-            </button>
-        @endif
     </div>
 
-    <!-- Form Input Nilai -->
+    <!-- FORM INPUT NILAI -->
     @if(isset($selectedSubject))
     <form action="{{ route('grades.store') }}" method="POST" id="gradeForm" onkeydown="return event.key != 'Enter';">
         @csrf
         <input type="hidden" id="current_subject_id" name="subject_id" value="{{ $selectedSubject }}">
         <input type="hidden" name="class" value="{{ $selectedClass ?? '' }}">
 
-        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-8">
-            <div class="p-6 border-b border-gray-50 flex justify-between items-center">
-                <h3 class="font-black text-gray-800 uppercase text-xs tracking-widest">Daftar Nilai Siswa</h3>
-                <div class="flex gap-3">
-                    <input type="text" id="columnName" placeholder="Nama Kategori (Contoh: Proyek 1)" class="p-2 border border-gray-100 bg-gray-50 rounded-xl text-sm font-bold text-gray-600 outline-none focus:ring-2 focus:ring-blue-50">
-                    <button type="button" onclick="addColumn()" class="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition">+ Tambah Kolom</button>
+        <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+            
+            <!-- Toolbar Tambah Kolom Kategori Dinamis -->
+            <div class="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h3 class="font-black text-base text-slate-900 tracking-tight">Lembar Penilaian Siswa</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Nilai otomatis tersimpan dan dihitung rata-ratanya</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="text" 
+                           id="columnName" 
+                           placeholder="Kategori baru (cth: Proyek 1)" 
+                           class="min-h-[44px] px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-900">
+                    <button type="button" 
+                            onclick="addColumn()" 
+                            class="min-h-[44px] px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl font-extrabold text-xs transition cursor-pointer shadow-sm shrink-0">
+                        + Tambah Kolom
+                    </button>
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full text-left" id="gradeTable">
-                    <thead class="bg-gray-50 text-gray-400 uppercase text-[10px] font-black tracking-widest">
-                        <tr id="tableHead">
-                            <th class="p-6">No</th>
-                            <th class="p-6">NIS</th>
-                            <th class="p-6">Nama Siswa</th>
-                            <th class="p-6 text-center">Tugas</th>
-                            <th class="p-6 text-center">Praktik</th>
-                            <th class="p-6 text-center">UH</th>
-                            <th class="p-6 text-center">UTS</th>
-                            <th class="p-6 text-center">UAS</th>
-                            <!-- Kategori Dinamis -->
+            <!-- Tabel Input Nilai -->
+            <div class="overflow-x-auto min-h-[350px]">
+                <table class="w-full text-left border-collapse" id="gradeTable">
+                    <thead>
+                        <tr class="bg-slate-50/80 text-slate-500 text-[11px] font-extrabold uppercase tracking-wider border-b border-slate-200" id="tableHead">
+                            <th class="py-4 px-4 sm:px-6 w-14 text-center">No</th>
+                            <th class="py-4 px-4 hidden sm:table-cell">NIS</th>
+                            <th class="py-4 px-4 min-w-[180px]">Nama Siswa</th>
+                            <th class="py-4 px-3 text-center min-w-[70px]">Tugas</th>
+                            <th class="py-4 px-3 text-center min-w-[70px]">Praktik</th>
+                            <th class="py-4 px-3 text-center min-w-[70px]">UH</th>
+                            <th class="py-4 px-3 text-center min-w-[70px]">UTS</th>
+                            <th class="py-4 px-3 text-center min-w-[70px]">UAS</th>
+                            <!-- Kolom Kategori Dinamis -->
                             @foreach($categories as $cat)
-                                <th class="p-6 text-center text-blue-600">{{ $cat->name }}</th>
+                                <th class="py-4 px-3 text-center text-blue-900 min-w-[80px]">{{ $cat->name }}</th>
                             @endforeach
-                            <th class="p-6 text-center">Rata-Rata</th>
-                            <th class="p-6 text-center">Status</th>
+                            <th class="py-4 px-4 text-center min-w-[90px]">Rata-Rata</th>
+                            <th class="py-4 px-4 text-center min-w-[100px]">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="text-gray-700 text-sm" id="tableBody">
+                    <tbody class="divide-y divide-slate-100 text-xs sm:text-sm" id="tableBody">
                         @forelse($students as $index => $student)
                         @php $grade = $grades->get($student->id); @endphp
-                        <tr class="border-b border-gray-50 hover:bg-gray-50 transition row-student" data-id="{{ $student->id }}">
-                            <td class="p-6 font-bold text-gray-400">{{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}</td>
-                            <td class="p-6 font-bold text-gray-500">{{ $student->nis }}</td>
-                            <td class="p-6 font-bold text-gray-800">{{ $student->name }}</td>
-                            <td class="p-4 text-center"><input type="number" name="grades[{{ $student->id }}][tugas]" data-field="tugas" value="{{ $grade->tugas ?? '' }}" class="w-16 p-2 bg-gray-50 border border-gray-100 rounded-lg text-center calc-input font-bold" placeholder="0"></td>
-                            <td class="p-4 text-center"><input type="number" name="grades[{{ $student->id }}][praktik]" data-field="praktik" value="{{ $grade->praktik ?? '' }}" class="w-16 p-2 bg-gray-50 border border-gray-100 rounded-lg text-center calc-input font-bold" placeholder="0"></td>
-                            <td class="p-4 text-center"><input type="number" name="grades[{{ $student->id }}][ulangan_harian]" data-field="ulangan_harian" value="{{ $grade->ulangan_harian ?? '' }}" class="w-16 p-2 bg-gray-50 border border-gray-100 rounded-lg text-center calc-input font-bold" placeholder="0"></td>
-                            <td class="p-4 text-center"><input type="number" name="grades[{{ $student->id }}][uts]" data-field="uts" value="{{ $grade->uts ?? '' }}" class="w-16 p-2 bg-gray-50 border border-gray-100 rounded-lg text-center calc-input font-bold" placeholder="0"></td>
-                            <td class="p-4 text-center"><input type="number" name="grades[{{ $student->id }}][uas]" data-field="uas" value="{{ $grade->uas ?? '' }}" class="w-16 p-2 bg-gray-50 border border-gray-100 rounded-lg text-center calc-input font-bold" placeholder="0"></td>
+                        <tr class="hover:bg-slate-50/80 transition row-student" data-id="{{ $student->id }}">
+                            <td class="py-4 px-4 sm:px-6 text-center font-bold text-slate-400">
+                                {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}
+                            </td>
+                            <td class="py-4 px-4 font-bold text-slate-500 hidden sm:table-cell">
+                                {{ $student->nis }}
+                            </td>
+                            <td class="py-4 px-4">
+                                <p class="font-extrabold text-slate-900">{{ $student->name }}</p>
+                                <p class="text-[10px] text-slate-400 font-medium sm:hidden">NIS: {{ $student->nis }}</p>
+                            </td>
+
+                            <!-- Input Komponen Nilai Standar -->
+                            <td class="py-3 px-2 text-center">
+                                <input type="number" 
+                                       inputmode="decimal"
+                                       name="grades[{{ $student->id }}][tugas]" 
+                                       data-field="tugas" 
+                                       value="{{ $grade->tugas ?? '' }}" 
+                                       class="w-16 h-10 px-2 bg-slate-50 border border-slate-200 rounded-xl text-center calc-input font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition" 
+                                       placeholder="0">
+                            </td>
+                            <td class="py-3 px-2 text-center">
+                                <input type="number" 
+                                       inputmode="decimal"
+                                       name="grades[{{ $student->id }}][praktik]" 
+                                       data-field="praktik" 
+                                       value="{{ $grade->praktik ?? '' }}" 
+                                       class="w-16 h-10 px-2 bg-slate-50 border border-slate-200 rounded-xl text-center calc-input font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition" 
+                                       placeholder="0">
+                            </td>
+                            <td class="py-3 px-2 text-center">
+                                <input type="number" 
+                                       inputmode="decimal"
+                                       name="grades[{{ $student->id }}][ulangan_harian]" 
+                                       data-field="ulangan_harian" 
+                                       value="{{ $grade->ulangan_harian ?? '' }}" 
+                                       class="w-16 h-10 px-2 bg-slate-50 border border-slate-200 rounded-xl text-center calc-input font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition" 
+                                       placeholder="0">
+                            </td>
+                            <td class="py-3 px-2 text-center">
+                                <input type="number" 
+                                       inputmode="decimal"
+                                       name="grades[{{ $student->id }}][uts]" 
+                                       data-field="uts" 
+                                       value="{{ $grade->uts ?? '' }}" 
+                                       class="w-16 h-10 px-2 bg-slate-50 border border-slate-200 rounded-xl text-center calc-input font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition" 
+                                       placeholder="0">
+                            </td>
+                            <td class="py-3 px-2 text-center">
+                                <input type="number" 
+                                       inputmode="decimal"
+                                       name="grades[{{ $student->id }}][uas]" 
+                                       data-field="uas" 
+                                       value="{{ $grade->uas ?? '' }}" 
+                                       class="w-16 h-10 px-2 bg-slate-50 border border-slate-200 rounded-xl text-center calc-input font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition" 
+                                       placeholder="0">
+                            </td>
                             
                             <!-- Input Kategori Dinamis -->
                             @foreach($categories as $cat)
                                 @php $itemValue = $grade ? $grade->items->where('grade_category_id', $cat->id)->first() : null; @endphp
-                                <td class="p-4 text-center">
-                                    <input type="number" name="grades[{{ $student->id }}][items][{{ $cat->id }}]" value="{{ $itemValue->value ?? 0 }}" class="w-16 p-2 bg-blue-50/50 border border-blue-100 rounded-lg text-center font-bold text-blue-700">
+                                <td class="py-3 px-2 text-center">
+                                    <input type="number" 
+                                           inputmode="decimal"
+                                           name="grades[{{ $student->id }}][items][{{ $cat->id }}]" 
+                                           value="{{ $itemValue->value ?? 0 }}" 
+                                           class="w-16 h-10 px-2 bg-blue-50/70 border border-blue-200 rounded-xl text-center font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white transition">
                                 </td>
                             @endforeach
 
-                            <td class="p-6 font-black text-blue-900 text-center text-lg rata-rata-display">
+                            <!-- Rata-Rata -->
+                            <td class="py-4 px-4 text-center font-black text-blue-900 text-base rata-rata-display">
                                 {{ number_format($grade->rata_rata ?? 0, 1) }}
                             </td>
-                            <td class="p-6 text-center">
-                                <span class="status-badge px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest {{ ($grade->status ?? '') == 'Tuntas' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }}">
+
+                            <!-- Status Badge -->
+                            <td class="py-4 px-4 text-center">
+                                <span class="status-badge px-3 py-1 rounded-full text-[11px] font-black {{ ($grade->status ?? '') == 'Tuntas' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                     {{ $grade->status ?? 'Belum' }}
                                 </span>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="100%" class="p-12 text-center text-gray-400 italic">Data siswa tidak ditemukan.</td></tr>
+                        <tr>
+                            <td colspan="100%" class="py-16 text-center text-slate-400">
+                                Tidak ada data siswa untuk kelas ini.
+                            </td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
             
-            <div class="p-6 bg-gray-50/50 border-t border-gray-100">
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Terakhir diperbarui: {{ date('H:i') }} WIB</p>
+            <div class="p-4 sm:p-5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
+                <span>Auto-save aktif saat nilai diubah.</span>
+                <span>Terakhir diperbarui: {{ date('H:i') }} WIB</span>
             </div>
         </div>
     </form>
     @else
-        <div class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
-            <p class="text-gray-400 font-medium">Silakan pilih Mata Pelajaran dan Kelas untuk mulai menginput nilai.</p>
+        <div class="py-20 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs p-6">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-blue-50 text-blue-900 flex items-center justify-center text-2xl border border-blue-100">
+                📊
+            </div>
+            <h3 class="font-black text-base text-slate-800">Pilih Mata Pelajaran dan Kelas</h3>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                Gunakan dropdown di atas untuk membuka formulir lembar penilaian akademik siswa.
+            </p>
         </div>
     @endif
 </div>
@@ -188,8 +299,8 @@
             if(data.success && data.status) {
                 const badge = row.querySelector('.status-badge');
                 badge.innerText = data.status;
-                badge.className = 'status-badge px-4 py-1.5 rounded-2xl text-[10px] font-black uppercase tracking-widest ' + 
-                    (data.status === 'Tuntas' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600');
+                badge.className = 'status-badge px-3 py-1 rounded-full text-[11px] font-black ' + 
+                    (data.status === 'Tuntas' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200');
             }
         });
     }
@@ -199,11 +310,14 @@
     });
 
     function addColumn() {
-        const columnName = document.getElementById('columnName').value;
+        const columnName = document.getElementById('columnName').value.trim();
         const subjectId = document.getElementById('current_subject_id').value;
         const selectedClass = "{{ $selectedClass ?? '' }}";
 
-        if (!columnName) { alert('Masukkan nama kategori/kolom'); return; }
+        if (!columnName) { 
+            alert('Masukkan nama kategori atau kolom baru.'); 
+            return; 
+        }
 
         fetch('{{ route("grades.addColumn") }}', {
             method: 'POST',
@@ -218,7 +332,7 @@
             if(data.success) {
                 location.reload(); 
             } else {
-                alert('Gagal menambah kolom');
+                alert('Gagal menambah kolom kategori');
             }
         });
     }
