@@ -121,6 +121,14 @@
 
     <!-- Sidebar Footer (Info Profil Guru & Tombol Logout) -->
     <div class="p-4 border-t border-slate-800/80 space-y-3">
+        <!-- Tombol Pasang Aplikasi di HP -->
+        <button type="button" 
+                onclick="window.dispatchEvent(new CustomEvent('trigger-pwa-install'))"
+                class="w-full min-h-[44px] flex items-center justify-center gap-2 px-3 py-2 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 text-blue-300 hover:text-white border border-slate-700/70 text-xs font-bold transition cursor-pointer">
+            <span class="text-sm">📲</span>
+            <span>Pasang Aplikasi Mobile</span>
+        </button>
+
         <!-- Kartu Guru -->
         <div class="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800">
             <div class="w-10 h-10 rounded-xl bg-blue-900 text-white font-extrabold flex items-center justify-center shrink-0 shadow-sm text-sm border border-blue-700">

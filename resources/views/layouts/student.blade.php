@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Portal Siswa') | SMPN 9 Probolinggo</title>
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#0A1128">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Jurnal SMPN 9">
+    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icons/icon-192x192.png') }}">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js untuk Interaktif -->
@@ -121,11 +130,16 @@
                 </nav>
             </div>
 
-            <!-- Tombol Aksi Bawah Sidebar (Keluar) -->
-            <div class="p-4 border-t border-gray-100 bg-white">
+            <!-- Tombol Aksi Bawah Sidebar (Pasang App & Keluar) -->
+            <div class="p-4 border-t border-gray-100 bg-white space-y-2">
+                <button type="button" 
+                        onclick="window.dispatchEvent(new CustomEvent('trigger-pwa-install'))"
+                        class="w-full min-h-[44px] flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl font-bold text-xs transition cursor-pointer border border-blue-200/60">
+                    <span>📲</span> Pasang Aplikasi di HP
+                </button>
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
-                    <button type="submit" class="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl font-bold text-xs transition cursor-pointer">
+                    <button type="submit" class="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl font-bold text-xs transition cursor-pointer">
                         Keluar
                     </button>
                 </form>
@@ -519,5 +533,8 @@
             }));
         };
     </script>
+
+    <!-- PWA Install Prompt Banner & Script -->
+    @include('partials.pwa-install-banner')
 </body>
 </html>

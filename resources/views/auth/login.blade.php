@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Masuk ke Portal | SMPN 9 Probolinggo</title>
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#0A1128">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Jurnal SMPN 9">
+    <link rel="apple-touch-icon" href="{{ asset('icons/icon-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('icons/icon-192x192.png') }}">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Alpine.js untuk Interaktivitas UI -->
@@ -264,6 +273,13 @@
                         <span>📝</span> Buat Akun Murid Baru
                     </a>
 
+                    <!-- Tombol Pasang Aplikasi di HP -->
+                    <button type="button" 
+                            onclick="window.dispatchEvent(new CustomEvent('trigger-pwa-install'))"
+                            class="w-full min-h-[48px] rounded-2xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 text-slate-700 hover:text-blue-900 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer">
+                        <span>📲</span> Pasang Aplikasi di HP (Hemat Memori)
+                    </button>
+
                 </div>
             </div>
 
@@ -292,5 +308,8 @@
             }
         });
     </script>
+
+    <!-- PWA Install Prompt Banner & Script -->
+    @include('partials.pwa-install-banner')
 </body>
 </html>
