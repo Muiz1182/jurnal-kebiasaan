@@ -221,8 +221,8 @@
                             @endif
 
                             <!-- Info Singkat User Desktop -->
-                            <div class="hidden md:block text-left pr-1">
-                                <p class="text-xs font-extrabold text-gray-900 leading-tight max-w-[130px] truncate">
+                            <div class="hidden md:block text-left pr-1 max-w-[200px] lg:max-w-[240px]">
+                                <p class="text-xs font-extrabold text-gray-900 leading-snug break-words">
                                     {{ Auth::user()->name ?? 'Nama Siswa' }}
                                 </p>
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
@@ -259,9 +259,9 @@
                                             {{ strtoupper(substr(Auth::user()->name ?? 'S', 0, 1)) }}
                                         </div>
                                     @endif
-                                    <div class="min-w-0 flex-1">
-                                        <h4 class="text-xs font-black text-white truncate">{{ Auth::user()->name ?? 'Nama Siswa' }}</h4>
-                                        <p class="text-[10px] text-blue-200 font-medium truncate mt-0.5">{{ Auth::user()->email ?? Auth::user()->username }}</p>
+                                    <div class="min-w-0 flex-1 space-y-0.5">
+                                        <h4 class="text-xs font-black text-white leading-snug break-words">{{ Auth::user()->name ?? 'Nama Siswa' }}</h4>
+                                        <p class="text-[10px] text-blue-200 font-medium truncate">{{ Auth::user()->email ?? Auth::user()->username }}</p>
                                         <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
                                             <span class="inline-block px-2 py-0.5 rounded-md bg-white/20 text-white text-[9px] font-black tracking-wider uppercase">
                                                 {{ Auth::user()->kelas ? 'Kelas ' . Auth::user()->kelas : 'Murid' }}

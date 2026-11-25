@@ -136,9 +136,9 @@
 
                 <!-- Profile Info -->
                 <div class="flex items-center gap-3 pl-3 border-l border-gray-200">
-                    <div class="text-right">
-                        <p class="text-xs font-bold text-gray-900">{{ auth()->user()->name ?? 'Super Admin' }}</p>
-                        <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Profile Settings</p>
+                    <div class="text-right max-w-[200px] lg:max-w-[240px]">
+                        <p class="text-xs font-bold text-gray-900 leading-snug break-words">{{ auth()->user()->name ?? 'Super Admin' }}</p>
+                        <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mt-0.5">Profile Settings</p>
                     </div>
                     <div class="w-9 h-9 rounded-2xl bg-blue-900 text-white font-bold flex items-center justify-center text-xs overflow-hidden shadow-md">
                         {{ strtoupper(substr(auth()->user()->name ?? 'SA', 0, 2)) }}

@@ -103,9 +103,9 @@
                     </div>
                 @endif
 
-                <!-- Nama & Jabatan Guru Desktop -->
-                <div class="text-left hidden md:block pr-1">
-                    <p class="text-xs font-extrabold text-slate-900 truncate max-w-[150px] leading-tight">
+                <!-- Nama & Jabatan Guru Desktop (Nama mengalir ke bawah jika panjang) -->
+                <div class="text-left hidden md:block pr-1 max-w-[200px] lg:max-w-[240px]">
+                    <p class="text-xs font-extrabold text-slate-900 leading-snug break-words">
                         {{ auth()->user()->name }}
                     </p>
                     <p class="text-[10px] text-slate-500 font-semibold truncate mt-0.5">
@@ -114,7 +114,7 @@
                 </div>
 
                 <!-- Chevron Icon -->
-                <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200" 
+                <i class="fas fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200 shrink-0" 
                    :class="profileOpen ? 'rotate-180 text-blue-900' : ''"></i>
             </button>
 
@@ -141,9 +141,9 @@
                                 {{ strtoupper(substr(auth()->user()->name ?? 'G', 0, 1)) }}
                             </div>
                         @endif
-                        <div class="min-w-0 flex-1">
-                            <h4 class="text-xs font-black text-white truncate">{{ auth()->user()->name }}</h4>
-                            <p class="text-[10px] text-blue-200 font-medium truncate mt-0.5">{{ auth()->user()->email ?? auth()->user()->username }}</p>
+                        <div class="min-w-0 flex-1 space-y-0.5">
+                            <h4 class="text-xs font-black text-white leading-snug break-words">{{ auth()->user()->name }}</h4>
+                            <p class="text-[10px] text-blue-200 font-medium truncate">{{ auth()->user()->email ?? auth()->user()->username }}</p>
                             <div class="flex items-center gap-1.5 mt-1.5 flex-wrap">
                                 <span class="inline-block px-2 py-0.5 rounded-md bg-white/20 text-white text-[9px] font-black tracking-wider uppercase">
                                     {{ auth()->user()->jabatan ?? 'Guru' }}
