@@ -13,7 +13,7 @@
 
 <!-- SIDEBAR ASIDE -->
 <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-       class="fixed inset-y-0 left-0 z-50 w-72 bg-[#0A1128] text-white flex flex-col justify-between border-r border-slate-800 shrink-0 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 shadow-2xl lg:shadow-none"
+       class="fixed inset-y-0 left-0 z-50 w-72 bg-[#0A1128] text-white flex flex-col justify-between border-r border-slate-800 shrink-0 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 shadow-2xl lg:shadow-none h-full overflow-y-auto"
        x-data="{ 
            openAbsensi: {{ request()->routeIs('attendance.*') ? 'true' : 'false' }}, 
            openNilai: {{ request()->routeIs('grades.*') ? 'true' : 'false' }} 
@@ -116,15 +116,6 @@
                     </a>
                 </div>
             </div>
-
-            <!-- Pengaturan Akun -->
-            <a href="{{ route('settings.index') }}" 
-               class="flex items-center gap-3 px-4 py-3 min-h-[48px] rounded-2xl transition {{ request()->routeIs('settings.*') ? 'bg-blue-900 text-white shadow-lg shadow-blue-900/30 font-bold' : 'text-slate-300 hover:bg-slate-800/60 hover:text-white' }}">
-                <div class="w-5 h-5 flex items-center justify-center text-base">
-                    <i class="fas fa-cog"></i>
-                </div>
-                <span>Pengaturan Profil</span>
-            </a>
         </nav>
     </div>
 

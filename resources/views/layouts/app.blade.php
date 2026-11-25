@@ -53,7 +53,7 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-900 min-h-screen antialiased selection:bg-blue-600 selection:text-white"
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen lg:h-screen lg:overflow-hidden antialiased selection:bg-blue-600 selection:text-white"
       x-data="{ 
           sidebarOpen: false,
           toasts: []
@@ -128,13 +128,13 @@
     </div>
 
     <!-- MAIN APP WRAPPER -->
-    <div class="flex min-h-screen relative">
+    <div class="flex min-h-screen lg:h-screen relative">
         
-        <!-- SIDEBAR GURU (DESKTOP & MOBILE DRAWER) -->
+        <!-- SIDEBAR GURU (DESKTOP STATIC & MOBILE DRAWER) -->
         @include('layouts.sidebar')
 
-        <!-- KONTEN UTAMA KANAN -->
-        <main class="flex-1 flex flex-col min-w-0 min-h-screen">
+        <!-- KONTEN UTAMA KANAN (SCROLL MANDIRI DI DESKTOP) -->
+        <main class="flex-1 flex flex-col min-w-0 min-h-screen lg:h-screen lg:overflow-y-auto">
             
             <!-- NAVBAR ATAS RESPONSIVE -->
             @include('layouts.navbar')

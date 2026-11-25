@@ -82,13 +82,6 @@
             </div>
         </div>
 
-        <!-- Tombol Pengaturan Cepat -->
-        <a href="{{ route('settings.index') }}" 
-           aria-label="Pengaturan Profil"
-           class="w-11 h-11 min-w-[44px] min-h-[44px] rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition">
-            <i class="fas fa-cog text-sm"></i>
-        </a>
-
         <!-- DROPDOWN PROFIL GURU & MODAL EDIT PROFIL -->
         <div class="relative pl-2 sm:pl-3 border-l border-slate-200" 
              x-data="{ profileOpen: false, modalEditOpen: false }" 
