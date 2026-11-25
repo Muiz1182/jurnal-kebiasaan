@@ -130,8 +130,37 @@
                 </nav>
             </div>
 
-            <!-- Tombol Aksi Bawah Sidebar (Pasang App & Keluar) -->
-            <div class="p-4 border-t border-gray-100 bg-white space-y-2">
+            <!-- Tombol Aksi Bawah Sidebar (Profil Murid, Pasang App & Keluar) -->
+            <div class="p-4 border-t border-gray-100 bg-white space-y-2.5">
+                <!-- Kartu Murid Sinkron -->
+                <div class="p-2.5 rounded-2xl bg-gray-50 border border-gray-100 flex items-start gap-2.5">
+                    @if(Auth::user()->foto_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->foto_profil))
+                        <img src="{{ \Illuminate\Support\Facades\Storage::url(Auth::user()->foto_profil) }}" 
+                             alt="{{ Auth::user()->name }}" 
+                             class="w-10 h-10 rounded-2xl object-cover border-2 border-blue-200 shadow-xs shrink-0">
+                    @else
+                        <div class="w-10 h-10 rounded-2xl bg-blue-900 text-white font-black flex items-center justify-center shrink-0 shadow-sm text-sm border border-blue-700">
+                            {{ strtoupper(substr(Auth::user()->name ?? 'S', 0, 1)) }}
+                        </div>
+                    @endif
+                    <div class="min-w-0 flex-1 space-y-1">
+                        <!-- Nama Murid: mengalir ke bawah jika panjang -->
+                        <p class="font-extrabold text-xs text-gray-900 leading-snug break-words">
+                            {{ Auth::user()->name ?? 'Nama Siswa' }}
+                        </p>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="inline-block px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 text-[10px] font-black uppercase tracking-wider">
+                                {{ Auth::user()->kelas ? 'Kelas ' . Auth::user()->kelas : 'Murid' }}
+                            </span>
+                            @if(Auth::user()->nisn)
+                                <span class="inline-block text-[10px] text-gray-500 font-mono font-semibold">
+                                    NISN: {{ Auth::user()->nisn }}
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 <button type="button" 
                         onclick="window.dispatchEvent(new CustomEvent('trigger-pwa-install'))"
                         class="w-full min-h-[44px] flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-900 rounded-xl font-bold text-xs transition cursor-pointer border border-blue-200/60">

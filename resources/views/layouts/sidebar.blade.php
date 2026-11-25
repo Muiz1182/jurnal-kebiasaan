@@ -129,16 +129,44 @@
             <span>Pasang Aplikasi Mobile</span>
         </button>
 
-        <!-- Kartu Guru -->
-        <div class="flex items-center gap-3 p-2.5 rounded-2xl bg-slate-900/80 border border-slate-800">
-            <div class="w-10 h-10 rounded-xl bg-blue-900 text-white font-extrabold flex items-center justify-center shrink-0 shadow-sm text-sm border border-blue-700">
-                {{ strtoupper(substr(auth()->user()->name ?? 'G', 0, 1)) }}
+        <!-- Kartu Profil Guru Sinkron -->
+        <a href="{{ route('settings.index') }}" 
+           title="Buka Pengaturan Profil Guru"
+           class="p-3 rounded-2xl bg-slate-900/90 hover:bg-slate-800/90 border border-slate-800 hover:border-slate-700 transition flex items-start gap-3 group block cursor-pointer">
+            
+            <!-- Foto Avatar atau Inisial -->
+            @if(auth()->user()->foto_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists(auth()->user()->foto_profil))
+                <img src="{{ \Illuminate\Support\Facades\Storage::url(auth()->user()->foto_profil) }}" 
+                     alt="{{ auth()->user()->name }}" 
+                     class="w-10 h-10 rounded-2xl object-cover border-2 border-blue-400/50 shadow-sm shrink-0 group-hover:border-blue-300 transition">
+            @else
+                <div class="w-10 h-10 rounded-2xl bg-blue-900 text-white font-extrabold flex items-center justify-center shrink-0 shadow-sm text-sm border border-blue-700 group-hover:bg-blue-800 transition">
+                    {{ strtoupper(substr(auth()->user()->name ?? 'G', 0, 1)) }}
+                </div>
+            @endif
+
+            <!-- Konten Teks: Nama mengalir ke bawah jika panjang -->
+            <div class="min-w-0 flex-1 space-y-1">
+                <p class="font-extrabold text-xs text-white group-hover:text-blue-200 transition leading-snug break-words">
+                    {{ auth()->user()->name }}
+                </p>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="inline-block px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 text-[10px] font-bold leading-none border border-blue-400/20">
+                        {{ auth()->user()->jabatan ?? 'Tenaga Pendidik' }}
+                    </span>
+                    @if(auth()->user()->kelas_mengajar)
+                        <span class="inline-block px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[9px] font-semibold leading-none">
+                            Kelas {{ auth()->user()->kelas_mengajar }}
+                        </span>
+                    @endif
+                </div>
+                @if(auth()->user()->nip)
+                    <p class="text-[10px] text-slate-400 font-mono font-medium truncate pt-0.5">
+                        NIP: {{ auth()->user()->nip }}
+                    </p>
+                @endif
             </div>
-            <div class="min-w-0 flex-1">
-                <p class="font-bold text-xs text-white truncate">{{ auth()->user()->name }}</p>
-                <p class="text-[10px] text-slate-400 font-semibold truncate">{{ auth()->user()->jabatan ?? 'Tenaga Pendidik' }}</p>
-            </div>
-        </div>
+        </a>
 
         <!-- Tombol Logout -->
         <form action="{{ route('logout') }}" method="POST">
